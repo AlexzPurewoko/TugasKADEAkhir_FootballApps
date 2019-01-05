@@ -1,6 +1,15 @@
 <resources>
     <string name="app_name">Football</string>
     <string name="splash_string_loading_data">Loading Data...</string>
-    <string name="splash_string_welcome">Selamat Datang!</string>
     <string name="title_activity_home">HomeActivity</string>
+    <string name="match_name_tab">Matchs</string>
+    <string name="football_name_tab">Teams</string>
+    <string name="my_favorites">Favorites</string>
+    <string name="adapter_str_vs">vs</string>
+    <string name="title_activity_about_teams">AboutTeams</string>
+    <string name="title_activity_detail_match">DetailMatchActivity</string>
+    <string name="title_activity_player_details">Player Details</string>
+    <string name="weight_kg">Weight (Kg)</string>
+    <string name="height_m">Height (m)</string>
+    <string name="player_images">Player Images</string>
 </resources>

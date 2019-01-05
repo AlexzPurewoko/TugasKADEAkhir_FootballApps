@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:contentPadding="6dp"
+        app:cardUseCompatPadding="true"
+        app:cardCornerRadius="4dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@android:color/white">
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <ImageView
+                android:id="@+id/adapter_list_member_teams_photos"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_width="80dp"
+                android:layout_height="80dp"/>
+        <TextView
+                android:id="@+id/adapter_list_member_teams_playername"
+                android:layout_toRightOf="@id/adapter_list_member_teams_photos"
+                android:layout_toEndOf="@id/adapter_list_member_teams_photos"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:layout_centerVertical="true"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Nama Pemain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        <TextView
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="MidFielder"
+                android:id="@+id/adapter_list_member_teams_playerposition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+    </RelativeLayout>
+</android.support.v7.widget.CardView>

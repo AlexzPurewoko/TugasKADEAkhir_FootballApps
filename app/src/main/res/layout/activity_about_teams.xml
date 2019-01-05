@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".activities.detailTeams.AboutTeams">
+
+    <android.support.design.widget.AppBarLayout
+            android:id="@+id/activity_aboutteams_appbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:background="@color/colorPrimary"
+            android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+        <ImageView
+                android:id="@+id/activity_aboutteams_teambadges"
+                android:layout_width="wrap_content"
+                android:layout_height="100dp"
+                tools:src="@drawable/ic_football_soccer"
+                android:layout_gravity="center"
+        />
+        <TextView
+                android:id="@+id/activity_aboutteams_teamnames"
+                android:layout_marginTop="10dp"
+                android:textColor="@android:color/white"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                tools:text="Barcelona"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        <TextView
+                android:id="@+id/activity_aboutteams_teamformedyear"
+                android:textColor="@android:color/white"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                tools:text="1999"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        <TextView
+                android:id="@+id/activity_aboutteams_teamstadium"
+                android:textColor="@android:color/white"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                tools:text="Camp Nou"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        <android.support.design.widget.TabLayout
+                android:id="@+id/activity_teamsabout_tablayout"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:tabGravity="fill">
+            <android.support.design.widget.TabItem
+                    android:id="@+id/aboutteams_overview"
+                    android:text="Overview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            <android.support.design.widget.TabItem
+                    android:id="@+id/aboutteams_details"
+                    android:text="Details"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            <android.support.design.widget.TabItem
+                    android:id="@+id/aboutteams_player"
+                    android:text="Player"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+        </android.support.design.widget.TabLayout>
+    </android.support.design.widget.AppBarLayout>
+
+    <android.support.v4.view.ViewPager
+            android:layout_below="@id/activity_aboutteams_appbar"
+            android:id="@+id/activity_aboutteams_conteiner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+</RelativeLayout>

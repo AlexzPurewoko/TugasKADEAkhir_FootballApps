@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="fragment_nextmatch_spinner" type="id"/>
+    <item name="fragment_match_spinner" type="id"/>
+    <item name="fragment_match_recyclerholder" type="id"/>
+    <item name="fragment_match_progressbar" type="id"/>
+    <item name="fragment_match_refreshswipe" type="id"/>
+    <item name="adapter_cardview_teams_teambadge" type="id"/>
+    <item name="adapter_cardview_teams_teamname" type="id"/>
+</resources>

@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
             android:allowBackup="true"
             android:icon="@mipmap/ic_launcher"
@@ -12,8 +13,8 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
         <activity
-                android:noHistory="true"
                 android:name=".activities.splash.SplashScreenActivity"
+                android:noHistory="true"
                 android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -26,6 +27,33 @@
                 android:name=".activities.home.HomeActivity"
                 android:label="@string/title_activity_home"
                 android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+        <activity
+                android:name=".activities.detailTeams.AboutTeams"
+                android:label="@string/title_activity_about_teams"
+                android:parentActivityName=".activities.home.HomeActivity"
+                android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="com.apwdevs.apps.football.activities.home.HomeActivity"/>
+        </activity>
+        <activity
+                android:name=".activities.detailMatchs.DetailMatchActivity"
+                android:label="@string/title_activity_detail_match"
+                android:parentActivityName=".activities.home.HomeActivity"
+                android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="com.apwdevs.apps.football.activities.home.HomeActivity"/>
+        </activity>
+        <activity
+                android:name=".activities.detailPlayer.PlayerDetails"
+                android:label="@string/title_activity_player_details"
+                android:parentActivityName=".activities.detailTeams.AboutTeams"
+                android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="com.apwdevs.apps.football.activities.detailTeams.AboutTeams"/>
         </activity>
     </application>
 
