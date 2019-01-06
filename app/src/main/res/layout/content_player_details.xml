@@ -5,6 +5,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:id="@+id/player_details_behavior"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/activity_player_details"
         tools:context=".activities.detailPlayer.PlayerDetails">
@@ -12,11 +13,34 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-        <ImageView
-                android:id="@+id/player_details_imagephotos"
+        <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/player_images"/>
+                android:layout_height="wrap_content">
+            <LinearLayout
+                    android:id="@+id/player_details_loadingfanart"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                <ProgressBar
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                <TextView
+                        android:text="Tunggu Sebentar"
+                        android:textAlignment="center"
+                        android:textStyle="italic"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+            </LinearLayout>
+            <ImageView
+                    android:id="@+id/player_details_imagephotos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/player_images"/>
+        </RelativeLayout>
+
         <LinearLayout
                 android:weightSum="2"
                 android:orientation="horizontal"

@@ -9,12 +9,14 @@ import com.apwdevs.apps.football.utility.CekKoneksi
 import com.apwdevs.apps.football.utility.CoroutineContextProvider
 import com.google.gson.Gson
 import kotlinx.coroutines.*
+import java.io.*
 
 class AboutTeamsPresenter(
     private val ctx: Context,
     private val view: AboutTeamsModel,
     private val apiRepository: ApiRepository,
     private val gson: Gson,
+    private val enableCaching: Boolean = true,
     private val isTesting: Boolean = false,
     private val contextPool: CoroutineContextProvider = CoroutineContextProvider()
 ) {
@@ -25,22 +27,58 @@ class AboutTeamsPresenter(
     fun getDataBehaviour(teamId: String) {
         view.showLoading()
         GlobalScope.launch(contextPool.main) {
-            if (if (isTesting) true else CekKoneksi.isConnected(ctx).await()) {
-                // get data teams
-                val aboutTeams = getAboutTeams(teamId)
-                if (aboutTeams.await()) {
-                    val listPlayers = getListPlayers(teamId)
-                    if (!listPlayers.await())
-                        msg = "Can't retrieve player data on Team id $teamId"
-                    else {
+            val cacheFilesTeams = File(ctx.cacheDir, "aboutteams_$teamId")
+            val cacheFilesMemberTeam = File(ctx.cacheDir, "member_team_$teamId")
+            if (enableCaching) {
+                if (cacheFilesTeams.exists() && cacheFilesMemberTeam.exists()) {
+
+                    // read from --> cacheFilesTeams
+                    var fstream = FileInputStream(cacheFilesTeams)
+                    var istream = ObjectInputStream(fstream)
+                    teams = istream.readObject() as TeamsAbout?
+                    istream.close()
+                    fstream.close()
+
+                    // read from --> cacheFilesMemberTeam
+                    fstream = FileInputStream(cacheFilesMemberTeam)
+                    istream = ObjectInputStream(fstream)
+                    listPlayers = istream.readObject() as List<TeamMemberShortData>?
+                    istream.close()
+                    fstream.close()
+
+                    // check if null, return a message
+                    if (teams != null || listPlayers != null) {
                         if (!getRecyclerDataSets().await())
                             msg = "Can't retrieve Recycler Data Sets"
-                    }
-                } else
-                    msg = "Can't get data from TheSportsDB!, maybe failure on internet connection"
-            } else
-                msg = "Your phone is not connected into internet, Consider to activate data connection!"
+                    } else
+                        msg = "Cannot open the data from Disks!"
 
+                } else {
+                    val data = getDataBehaviourFromInet(teamId).await()
+                    if (data) {
+                        // save into file --> cacheFilesTeams
+                        var fstream = FileOutputStream(cacheFilesTeams)
+                        var ostream = ObjectOutputStream(fstream)
+                        ostream.writeObject(teams!!)
+                        ostream.flush()
+                        fstream.flush()
+                        ostream.close()
+                        fstream.close()
+
+                        // save into file --> cacheFilesMemberTeam
+                        fstream = FileOutputStream(cacheFilesMemberTeam)
+                        ostream = ObjectOutputStream(fstream)
+                        ostream.writeObject(listPlayers!!)
+                        ostream.flush()
+                        fstream.flush()
+                        ostream.close()
+                        fstream.close()
+                    }
+                }
+
+
+            } else
+                getDataBehaviourFromInet(teamId).await()
             if (isTesting) Thread.sleep(1000)
             else delay(1000)
 
@@ -50,6 +88,26 @@ class AboutTeamsPresenter(
             else
                 view.onLoadCancelled(msg!!)
         }
+    }
+
+    private fun getDataBehaviourFromInet(teamId: String): Deferred<Boolean> = GlobalScope.async {
+        if (if (isTesting) true else CekKoneksi.isConnected(ctx).await()) {
+            // get data teams
+            val aboutTeams = getAboutTeams(teamId)
+            if (aboutTeams.await()) {
+                val listPlayers = getListPlayers(teamId)
+                if (!listPlayers.await())
+                    msg = "Can't retrieve player data on Team id $teamId"
+                else {
+                    if (!getRecyclerDataSets().await())
+                        msg = "Can't retrieve Recycler Data Sets"
+                }
+            } else
+                msg = "Can't get data from TheSportsDB!, maybe failure on internet connection"
+        } else
+            msg = "Your phone is not connected into internet, Consider to activate data connection!"
+
+        msg != null
     }
 
     private fun getAboutTeams(teamId: String): Deferred<Boolean> = GlobalScope.async {

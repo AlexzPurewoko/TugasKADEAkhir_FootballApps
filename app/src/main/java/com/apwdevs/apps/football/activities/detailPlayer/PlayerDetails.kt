@@ -1,9 +1,12 @@
 package com.apwdevs.apps.football.activities.detailPlayer
 
+import android.graphics.Bitmap
+import android.graphics.Point
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.Process
+import android.support.v4.util.LruCache
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -13,7 +16,6 @@ import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.detailPlayer.dataController.PlayersDetailData
 import com.apwdevs.apps.football.activities.detailPlayer.presenter.PlayerDetailsPresenter
 import com.apwdevs.apps.football.activities.detailPlayer.ui.PlayerDetailsModel
-import com.apwdevs.apps.football.activities.detailTeams.AboutTeams
 import com.apwdevs.apps.football.activities.detailTeams.dataController.DetailRecyclerData
 import com.apwdevs.apps.football.activities.detailTeams.fragments.adapter.DetailTeamRA
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
@@ -22,16 +24,14 @@ import com.apwdevs.apps.football.utility.DialogShowHelper
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.google.gson.Gson
 import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
 import kotlinx.android.synthetic.main.activity_player_details.*
 import kotlinx.android.synthetic.main.content_player_details.*
 import org.jetbrains.anko.alert
-import org.jetbrains.anko.clearTask
-import org.jetbrains.anko.clearTop
-import org.jetbrains.anko.intentFor
 
 class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
 
-
+    private val TIME_UPDATE_IMAGE_FANART: Long = 4000
     private lateinit var playerImage: ImageView
     private lateinit var playerWeight: TextView
     private lateinit var playerHeight: TextView
@@ -44,8 +44,74 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
     private lateinit var playerId: String
     private lateinit var teamId: String
 
+    private var memCache: LruCache<Int, Bitmap>? = null
+    private var currentPos: Int = 0
+    private lateinit var imageSize: Point
+
     private val dialog: DialogShowHelper = DialogShowHelper(this)
     private lateinit var presenter: PlayerDetailsPresenter
+    private val targetPlayerImage: Target = object : Target {
+        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+
+        }
+
+        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+        }
+
+        override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+            //val holder = player_details_behavior
+
+            bitmapLoaded(bitmap)
+
+        }
+
+    }
+
+    private val targetPlayerImage2: Target = object : Target {
+        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+
+        }
+
+        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+        }
+
+        override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+            //val holder = player_details_behavior
+
+            bitmapLoaded(bitmap)
+
+        }
+
+    }
+
+    private var mImageUpdaterHandler: Handler? = null
+    private var mImageUpdater: Runnable? = null
+
+    private fun setHandlers() {
+        if (mImageUpdaterHandler == null) {
+            mImageUpdater = Runnable {
+                if (memCache != null && memCache?.size()!! > 0) {
+                    playerImage.post {
+                        playerImage.setImageBitmap(memCache?.get(currentPos))
+                    }
+                    if (++currentPos >= memCache?.size()!!)
+                        currentPos = 0
+                }
+                clearHandlers(mImageUpdater!!)
+                setHandlers()
+            }
+
+            mImageUpdaterHandler = Handler(Looper.getMainLooper())
+            mImageUpdaterHandler?.postDelayed(mImageUpdater, TIME_UPDATE_IMAGE_FANART)
+        }
+    }
+
+    private fun clearHandlers(mRunnable: Runnable) {
+        mImageUpdaterHandler?.removeCallbacks(mRunnable)
+        mImageUpdaterHandler = null
+        mImageUpdater = null
+        System.gc()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,14 +156,17 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
             negativeButton("Quit") {
                 it.dismiss()
                 this@PlayerDetails.finish()
-                val pid = Process.myPid()
-                Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(pid) }, 1200)
+                //val pid = Process.myPid()
+                //Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(pid) }, 1200)
             }
-        }
+        }.show()
     }
 
     override fun onDataLoadFinished(playerData: PlayersDetailData, recyclerData: MutableList<DetailRecyclerData>) {
-        Picasso.get().load(playerData.playerPhotos).into(playerImage)
+        Picasso.get().load(playerData.strFanart1).into(targetPlayerImage)
+        Picasso.get().load(playerData.strFanart2).into(targetPlayerImage2)
+        //Picasso.get().load(playerData.strFanart3).into(targetPlayerImage)
+        //Picasso.get().load(playerData.strFanart4).into(targetPlayerImage)
         playerWeight.text = playerData.playerWeight
         playerHeight.text = playerData.playerHeight
         playerPosition.text = playerData.playerPosition
@@ -109,12 +178,56 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
     }
 
     override fun onBackPressed() {
-        startActivity(
+        /*startActivity(
             intentFor<AboutTeams>(
                 ParameterClass.ID_SELECTED_TEAMS to teamId,
                 ParameterClass.LIST_LEAGUE_DATA to leagues
             ).clearTop().clearTask()
+        )*/
+        finish()
+    }
+
+    fun bitmapLoaded(bitmap: Bitmap?) {
+        if (bitmap == null) return
+        if (memCache == null) {
+            val bitmapHeight = bitmap.height
+            val bitmapWidth = bitmap.width
+            val sizeScreen = Point()
+            val imgSize = Point()
+            windowManager.defaultDisplay.getSize(sizeScreen)
+
+            // building size
+            val factor = bitmapWidth.toFloat() / sizeScreen.x.toFloat()
+            imgSize.x = sizeScreen.x
+            imgSize.y = (bitmapHeight.toFloat() / Math.round(factor)).toInt()
+            imageSize = imgSize
+
+            memCache = LruCache(imgSize.x * imgSize.y * 4)
+            setHandlers()
+        }
+
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, imageSize.x, imageSize.y, false)
+        memCache?.put(
+            if (memCache?.size()!! - 1 == -1)
+                0
+            else
+                memCache?.size()!!,
+            scaledBitmap
         )
+
+    }
+
+    override fun onDestroy() {
+        if (memCache != null) {
+            if (mImageUpdater != null) clearHandlers(mImageUpdater!!)
+            var i = 0
+            while (i < memCache?.size()!!)
+                memCache?.get(i++)!!.recycle()
+            memCache?.evictAll()
+            memCache = null
+            System.gc()
+        }
+        super.onDestroy()
     }
 
     override fun onSupportNavigateUp(): Boolean {

@@ -84,9 +84,9 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         val presenter = DetailMatchPresenter(this, apiRepository, this, gson)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = nameLeague
-        presenter.getDataFromServer(idMatch)
+        presenter.getData(idMatch)
         activity_detail_match_swiperefresh.onRefresh {
-            presenter.getDataFromServer(idMatch)
+            presenter.getData(idMatch)
         }
 
     }

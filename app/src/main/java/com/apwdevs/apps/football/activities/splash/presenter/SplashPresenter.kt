@@ -58,7 +58,7 @@ class SplashPresenter(
                             "Please activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
                 }
             } else {
-                if (if (isTesting) true else CekKoneksi.isConnected(ctx).await()) {
+                //if (if (isTesting) true else CekKoneksi.isConnected(ctx).await()) {
                     try {
                         val fis = FileInputStream(fileDir)
                         val ois = ObjectInputStream(fis)
@@ -70,8 +70,8 @@ class SplashPresenter(
                         msg =
                                 "$e. Please make sure you restart the application. If this problem is occur again, try reinstalling the app\n\nERR_IO_EXCEPTION\n:("
                     }
-                } else msg =
-                        "Please activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
+                //} else msg =
+                //"Please activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
 
 
                 if (isTesting)
