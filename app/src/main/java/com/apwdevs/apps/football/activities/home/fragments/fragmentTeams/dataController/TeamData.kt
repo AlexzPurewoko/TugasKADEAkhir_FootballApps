@@ -1,6 +1,7 @@
 package com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.dataController
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class TeamData(
     @SerializedName("idTeam")
@@ -11,4 +12,4 @@ data class TeamData(
 
     @SerializedName("strTeamBadge")
     var teamBadge: String? = null
-)
+) : Serializable

@@ -8,6 +8,7 @@ import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataCon
 
 class FragmentLastMatchRA(
     private val listMatch: List<MatchLeagueData>,
+    private val patternDate: String = "dd/MM/yyyy",
     private val listener: (MatchLeagueData) -> Unit
 ) : RecyclerView.Adapter<FragmentLastMatchVH>() {
 
@@ -27,7 +28,7 @@ class FragmentLastMatchRA(
     override fun getItemCount(): Int = listMatch.size
 
     override fun onBindViewHolder(holder: FragmentLastMatchVH, position: Int) {
-        holder.bindItem(listMatch[position], listener)
+        holder.bindItem(listMatch[position], patternDate, listener)
     }
 
 }

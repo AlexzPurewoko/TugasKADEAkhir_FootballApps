@@ -28,6 +28,7 @@ import com.apwdevs.apps.football.utility.visible
 import com.google.gson.Gson
 import org.jetbrains.anko.AnkoContext
 import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.find
 import org.jetbrains.anko.support.v4.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
@@ -108,7 +109,7 @@ class FragmentTeams : Fragment(), FragmentTeamsModel {
     }
 
     override fun onNotLoaded(msg: String) {
-
+        swipeRefresh.snackbar("Error : $msg").show()
     }
 
     override fun onFullyLoaded(teams: List<TeamData>) {

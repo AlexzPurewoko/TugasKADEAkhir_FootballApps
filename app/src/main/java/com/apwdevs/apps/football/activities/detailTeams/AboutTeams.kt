@@ -1,15 +1,16 @@
 package com.apwdevs.apps.football.activities.detailTeams
 
+import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.Process
 import android.support.design.widget.TabLayout
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentStatePagerAdapter
+import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
 import com.apwdevs.apps.football.R
@@ -22,17 +23,21 @@ import com.apwdevs.apps.football.activities.detailTeams.fragments.ListMemberFrag
 import com.apwdevs.apps.football.activities.detailTeams.fragments.OverviewFragment
 import com.apwdevs.apps.football.activities.detailTeams.presenter.AboutTeamsPresenter
 import com.apwdevs.apps.football.activities.detailTeams.ui.AboutTeamsModel
-import com.apwdevs.apps.football.activities.home.HomeActivity
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.api.ApiRepository
+import com.apwdevs.apps.football.database.TeamFavoriteData
+import com.apwdevs.apps.football.database.database
 import com.apwdevs.apps.football.utility.DialogShowHelper
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.google.gson.Gson
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_about_teams.*
 import org.jetbrains.anko.alert
-import org.jetbrains.anko.clearTask
-import org.jetbrains.anko.intentFor
+import org.jetbrains.anko.db.classParser
+import org.jetbrains.anko.db.delete
+import org.jetbrains.anko.db.insert
+import org.jetbrains.anko.db.select
+import org.jetbrains.anko.design.snackbar
 
 class AboutTeams : AppCompatActivity(), AboutTeamsModel {
 
@@ -42,7 +47,7 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
     private lateinit var mViewPagerFragmentAdapter: ViewPagerFragmentAdapter
     private lateinit var tabLayout: TabLayout
 
-    private lateinit var teams: TeamsAbout
+    private var teams: TeamsAbout? = null
     private lateinit var leagues: MutableList<TeamLeagueData>
     private lateinit var players: List<TeamMemberShortData>
     private lateinit var recyclerDataSets: List<DetailRecyclerData>
@@ -53,19 +58,8 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
     private lateinit var teamFormedYear: TextView
     private lateinit var teamStadiumName: TextView
     private lateinit var teamId: String
-    /*private val targetBAckgroundAppBar: Target = object : Target {
-        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
-
-        }
-
-        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
-        }
-
-        override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
-            activity_aboutteams_appbar.background = BitmapDrawable(resources, bitmap)
-        }
-
-    }*/
+    private var isFavorite: Boolean = false
+    private var menuItem: Menu? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,9 +82,33 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         val apiRepository = ApiRepository()
         val gson = Gson()
         presenter = AboutTeamsPresenter(this, this, apiRepository, gson)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(aboutteams_toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         presenter.getDataBehaviour(teamId)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        favoriteState()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_details, menu)
+        menuItem = menu
+        setFavorite()
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return when (item?.itemId) {
+            R.id.action_favorite -> {
+                if (isFavorite) removeFromFavorite() else addToFavorite()
+                isFavorite = !isFavorite
+                setFavorite()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     override fun showLoading() {
@@ -106,8 +124,8 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
             negativeButton("Okay") {
                 it.dismiss()
                 finish()
-                val pid = Process.myPid()
-                Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(pid) }, 1500)
+                //val pid = Process.myPid()
+                //Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(pid) }, 1500)
             }
             iconResource = R.drawable.ic_report_problem
         }.show()
@@ -122,11 +140,11 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         this.players = players
         this.recyclerDataSets = recyclerDataSets
 
-        Picasso.get().load(teams.teamBadge).resize(150, 150).into(teamBadges)
-        //Picasso.get().load(teams.stadiumImage).into(targetBAckgroundAppBar)
-        teamName.text = teams.teamName
-        teamStadiumName.text = teams.stadiumName
-        teamFormedYear.text = teams.formedOnYear
+        Picasso.get().load(teams?.teamBadge).resize(150, 150).into(teamBadges)
+        //Picasso.get().load(teams?.stadiumImage).into(targetBAckgroundAppBar)
+        teamName.text = teams?.teamName
+        teamStadiumName.text = teams?.stadiumName
+        teamFormedYear.text = teams?.formedOnYear
 
         mViewPagerFragmentAdapter = ViewPagerFragmentAdapter(supportFragmentManager)
         viewPagerContainer.adapter = mViewPagerFragmentAdapter
@@ -157,11 +175,14 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
             }
 
         })
+        supportActionBar?.title = "About ${team.teamName}"
+        favoriteState()
+        setFavorite()
     }
 
     inner class ViewPagerFragmentAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
         override fun getItem(p0: Int): Fragment = when (p0) {
-            0 -> OverviewFragment.newInstance(teams.clubDescription ?: "Description is Unavailable")
+            0 -> OverviewFragment.newInstance(teams?.clubDescription ?: "Description is Unavailable")
             1 -> DetailTeamsFragment.newInstance(DetailRecyclerCarry(recyclerDataSets))
             else -> ListMemberFragment.newInstance(players, leagues, teamId)
         }
@@ -170,13 +191,66 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
 
     }
 
+    private fun favoriteState() {
+        if (teams == null) return
+        database.use {
+            val result = select(TeamFavoriteData.TABLE_TEAM_FAVORITE)
+                .whereArgs(
+                    "(${TeamFavoriteData.ID_TEAM} = {id})",
+                    "id" to teams?.teamId!!
+                )
+            val favorites = result.parseList(classParser<TeamFavoriteData>())
+
+            if (!favorites.isEmpty()) isFavorite = true
+        }
+    }
+
+    private fun setFavorite() {
+        if (isFavorite)
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, R.drawable.ic_added_to_favorites)
+        else
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, R.drawable.ic_add_to_favorites)
+    }
+
+    private fun addToFavorite() {
+        try {
+            database.use {
+                insert(
+                    TeamFavoriteData.TABLE_TEAM_FAVORITE,
+                    TeamFavoriteData.ID_TEAM to teams?.teamId,
+                    TeamFavoriteData.TEAM_NAME to teams?.teamName,
+                    TeamFavoriteData.TEAM_LOGO to teams?.teamBadge
+                )
+            }
+            viewPagerContainer.snackbar(ParameterClass.STRING_ADD_INTO_DATABASE).show()
+        } catch (e: SQLiteConstraintException) {
+            viewPagerContainer.snackbar(e.localizedMessage).show()
+
+        }
+    }
+
+    private fun removeFromFavorite() {
+        try {
+            database.use {
+                delete(
+                    TeamFavoriteData.TABLE_TEAM_FAVORITE,
+                    "(${TeamFavoriteData.ID_TEAM} = {id})",
+                    "id" to teams?.teamId!!
+                )
+            }
+            viewPagerContainer.snackbar(ParameterClass.STRING_REMOVE_FROM_DATABASE).show()
+        } catch (e: SQLiteConstraintException) {
+            viewPagerContainer.snackbar(e.localizedMessage).show()
+        }
+    }
+
     override fun onBackPressed() {
         finish()
-        startActivity(
+        /*startActivity(
             intentFor<HomeActivity>(
                 ParameterClass.LIST_LEAGUE_DATA to leagues
             ).clearTask()
-        )
+        )*/
     }
 
     override fun onSupportNavigateUp(): Boolean {

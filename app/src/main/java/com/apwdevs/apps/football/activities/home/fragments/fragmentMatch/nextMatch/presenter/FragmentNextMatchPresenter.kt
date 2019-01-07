@@ -63,7 +63,7 @@ class FragmentNextMatchPresenter(
         GlobalScope.launch(contextPool.main) {
             if (enableCaching) {
 
-                val cacheData = File(ctx.cacheDir, "last_match$leagueId")
+                val cacheData = File(ctx.cacheDir, "next_match$leagueId")
                 if (cacheData.exists()) {
 
                     // read from --> cacheFilesTeams
@@ -76,7 +76,7 @@ class FragmentNextMatchPresenter(
                     if (data == null)
                         msg = "Cannot get data from the disk!"
                 } else {
-                    if (getMatchFromServer(leagueId).await()) {
+                    if (!getMatchFromServer(leagueId).await()) {
                         // save into file --> cacheData
                         val fstream = FileOutputStream(cacheData)
                         val ostream = ObjectOutputStream(fstream)

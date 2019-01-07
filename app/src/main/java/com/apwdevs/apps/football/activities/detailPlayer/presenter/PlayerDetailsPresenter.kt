@@ -48,7 +48,7 @@ class PlayerDetailsPresenter(
                     } else
                         msg = "Cannot open the data from Disks!"
                 } else {
-                    if (getPlayerDetailsFromInternet(playerId).await()) {
+                    if (!getPlayerDetailsFromInternet(playerId).await()) {
                         // save into file --> cacheFilesTeams
                         val fstream = FileOutputStream(cachePlayers)
                         val ostream = ObjectOutputStream(fstream)

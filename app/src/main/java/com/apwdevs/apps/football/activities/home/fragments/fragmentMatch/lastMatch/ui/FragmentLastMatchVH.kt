@@ -18,10 +18,11 @@ class FragmentLastMatchVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
     private val homeScoreTeam: TextView = itemView.findViewById(R.id.adapter_cardview_footballmatch_id_teamscore_left)
     private val awayScoreTeam: TextView = itemView.findViewById(R.id.adapter_cardview_footballmatch_id_teamscore_right)
 
-    fun bindItem(item: MatchLeagueData, listener: (MatchLeagueData) -> Unit) {
+    fun bindItem(item: MatchLeagueData, pattern: String = "dd/MM/yyyy", listener: (MatchLeagueData) -> Unit) {
         clockAdd.gone()
-        date.text = MyDate.getDate(item.date, "dd/MM/yyyy")
-        time.text = MyDate.getTimeInGMT7(item.time)
+        val currentCalendar = MyDate.getCalendarInGMT7(item.time, item.date, pattern)
+        date.text = MyDate.getDateFromCalendar(currentCalendar)//MyDate.getDate(item.date, pattern)
+        time.text = MyDate.getTimeFromCalendar(currentCalendar)//MyDate.getTimeInGMT7(item.time)
         homeNameTeam.text = item.homeTeamName
         homeScoreTeam.text = item.homeTeamScore
         awayNameTeam.text = item.awayTeamName

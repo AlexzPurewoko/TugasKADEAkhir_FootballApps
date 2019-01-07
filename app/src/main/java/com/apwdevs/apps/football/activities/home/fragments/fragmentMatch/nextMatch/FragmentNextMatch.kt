@@ -12,7 +12,6 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ProgressBar
 import android.widget.Spinner
-import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.R.id.*
 import com.apwdevs.apps.football.activities.detailMatchs.DetailMatchActivity
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataController.MatchLeagueData
@@ -31,8 +30,8 @@ import com.google.gson.Gson
 import org.jetbrains.anko.AnkoContext
 import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.clearTop
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.find
-import org.jetbrains.anko.support.v4.alert
 import org.jetbrains.anko.support.v4.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
 
@@ -115,12 +114,7 @@ class FragmentNextMatch : Fragment(), FragmentNextMatchModel {
     }
 
     override fun onRequestFailed(msg: String) {
-        alert(msg, "Error") {
-            iconResource = R.drawable.ic_report_problem
-            negativeButton("Quit") {
-                it.dismiss()
-            }
-        }.show()
+        swipeRefresh.snackbar("Error : $msg").show()
     }
 
     override fun onDataSucceeded(leagues: MatchLeagueResponse) {

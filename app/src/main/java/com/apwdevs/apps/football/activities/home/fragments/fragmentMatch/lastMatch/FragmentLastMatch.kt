@@ -30,8 +30,8 @@ import com.google.gson.Gson
 import org.jetbrains.anko.AnkoContext
 import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.clearTop
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.find
-import org.jetbrains.anko.support.v4.alert
 import org.jetbrains.anko.support.v4.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
 
@@ -113,12 +113,7 @@ class FragmentLastMatch : Fragment(), FragmentLastMatchModel {
     }
 
     override fun onRequestFailed(msg: String) {
-        alert(msg, "Error") {
-            iconResource = R.drawable.ic_report_problem
-            negativeButton("Quit") {
-                it.dismiss()
-            }
-        }.show()
+        swipeRefresh.snackbar("Error : $msg").show()
     }
 
     override fun onDataSucceeded(leagues: MatchLeagueResponse) {

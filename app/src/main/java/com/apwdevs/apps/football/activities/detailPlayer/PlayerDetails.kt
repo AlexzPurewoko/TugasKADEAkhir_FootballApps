@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.detailPlayer.dataController.PlayersDetailData
@@ -22,6 +23,7 @@ import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.utility.DialogShowHelper
 import com.apwdevs.apps.football.utility.ParameterClass
+import com.apwdevs.apps.football.utility.gone
 import com.google.gson.Gson
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
@@ -31,12 +33,13 @@ import org.jetbrains.anko.alert
 
 class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
 
-    private val TIME_UPDATE_IMAGE_FANART: Long = 4000
+    private val TIME_UPDATE_IMAGE_FANART: Long = 6000
     private lateinit var playerImage: ImageView
     private lateinit var playerWeight: TextView
     private lateinit var playerHeight: TextView
     private lateinit var playerPosition: TextView
     private lateinit var playerDescription: TextView
+    private lateinit var loadingFanArtHolder: LinearLayout
     private lateinit var moreDetailsRecycler: RecyclerView
     private lateinit var recyclerAdapter: DetailTeamRA
 
@@ -46,42 +49,30 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
 
     private var memCache: LruCache<Int, Bitmap>? = null
     private var currentPos: Int = 0
+    private var isFirstLaunchHandler: Boolean = true
     private lateinit var imageSize: Point
 
     private val dialog: DialogShowHelper = DialogShowHelper(this)
     private lateinit var presenter: PlayerDetailsPresenter
-    private val targetPlayerImage: Target = object : Target {
-        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
-
-        }
-
-        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
-        }
-
+    private val targetB1 = object : TargetHolder() {
         override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
-            //val holder = player_details_behavior
-
             bitmapLoaded(bitmap)
-
         }
-
     }
-
-    private val targetPlayerImage2: Target = object : Target {
-        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
-
-        }
-
-        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
-        }
-
+    private val targetB2 = object : TargetHolder() {
         override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
-            //val holder = player_details_behavior
-
             bitmapLoaded(bitmap)
-
         }
-
+    }
+    private val targetB3 = object : TargetHolder() {
+        override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+            bitmapLoaded(bitmap)
+        }
+    }
+    private val targetB4 = object : TargetHolder() {
+        override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+            bitmapLoaded(bitmap)
+        }
     }
 
     private var mImageUpdaterHandler: Handler? = null
@@ -102,7 +93,13 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
             }
 
             mImageUpdaterHandler = Handler(Looper.getMainLooper())
-            mImageUpdaterHandler?.postDelayed(mImageUpdater, TIME_UPDATE_IMAGE_FANART)
+            mImageUpdaterHandler?.postDelayed(
+                mImageUpdater,
+                if (isFirstLaunchHandler) {
+                    1500
+                } else
+                    TIME_UPDATE_IMAGE_FANART
+            )
         }
     }
 
@@ -139,7 +136,7 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         playerPosition = player_details_player_position
         playerDescription = player_details_playerdetails
         moreDetailsRecycler = player_details_adapter
-
+        loadingFanArtHolder = player_details_loadingfanart
     }
 
     override fun showLoading() {
@@ -163,10 +160,10 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
     }
 
     override fun onDataLoadFinished(playerData: PlayersDetailData, recyclerData: MutableList<DetailRecyclerData>) {
-        Picasso.get().load(playerData.strFanart1).into(targetPlayerImage)
-        Picasso.get().load(playerData.strFanart2).into(targetPlayerImage2)
-        //Picasso.get().load(playerData.strFanart3).into(targetPlayerImage)
-        //Picasso.get().load(playerData.strFanart4).into(targetPlayerImage)
+        Picasso.get().load(playerData.strFanart1).into(targetB1)
+        Picasso.get().load(playerData.strFanart2).into(targetB2)
+        Picasso.get().load(playerData.strFanart3).into(targetB3)
+        Picasso.get().load(playerData.strFanart4).into(targetB4)
         playerWeight.text = playerData.playerWeight
         playerHeight.text = playerData.playerHeight
         playerPosition.text = playerData.playerPosition
@@ -175,6 +172,7 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         recyclerAdapter = DetailTeamRA(recyclerData)
         moreDetailsRecycler.layoutManager = LinearLayoutManager(this)
         moreDetailsRecycler.adapter = recyclerAdapter
+        supportActionBar?.title = playerData.playerName
     }
 
     override fun onBackPressed() {
@@ -195,15 +193,18 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
             val sizeScreen = Point()
             val imgSize = Point()
             windowManager.defaultDisplay.getSize(sizeScreen)
+            val actb = supportActionBar?.height!!
 
             // building size
             val factor = bitmapWidth.toFloat() / sizeScreen.x.toFloat()
             imgSize.x = sizeScreen.x
-            imgSize.y = (bitmapHeight.toFloat() / Math.round(factor)).toInt()
+            imgSize.y = (bitmapHeight.toFloat() / Math.round(factor)).toInt() + actb
             imageSize = imgSize
 
             memCache = LruCache(imgSize.x * imgSize.y * 4)
+            loadingFanArtHolder.gone()
             setHandlers()
+            isFirstLaunchHandler = false
         }
 
         val scaledBitmap = Bitmap.createScaledBitmap(bitmap, imageSize.x, imageSize.y, false)
@@ -233,5 +234,17 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    abstract class TargetHolder : Target {
+        override fun onBitmapFailed(e: java.lang.Exception?, errorDrawable: Drawable?) {
+
+        }
+
+        abstract override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?)
+
+        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+
+        }
     }
 }

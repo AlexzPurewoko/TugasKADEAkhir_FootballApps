@@ -58,7 +58,7 @@ class FragmentTeamsPresenter(
                         msg = "Cannot get data from disks!"
 
                 } else {
-                    if (getAllTeamsListFromServer(leagueInURI).await()) {
+                    if (!getAllTeamsListFromServer(leagueInURI).await()) {
                         // save into file --> cacheData
                         val fstream = FileOutputStream(cacheData)
                         val ostream = ObjectOutputStream(fstream)

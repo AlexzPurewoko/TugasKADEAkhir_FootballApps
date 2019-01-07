@@ -59,7 +59,7 @@ class DetailMatchPresenter(
                         msg = "Can't gets the data from disk!"
 
                 } else {
-                    if (getDataFromServer(eventId).await()) {
+                    if (!getDataFromServer(eventId).await()) {
                         // save into file --> cacheTeams
                         var fstream = FileOutputStream(cacheTeams)
                         var ostream = ObjectOutputStream(fstream)

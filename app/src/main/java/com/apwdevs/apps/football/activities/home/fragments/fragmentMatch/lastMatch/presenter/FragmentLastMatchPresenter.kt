@@ -45,7 +45,7 @@ class FragmentLastMatchPresenter(
                     if (data == null)
                         msg = "Cannot get data from the disk!"
                 } else {
-                    if (getMatchFromServer(leagueId).await()) {
+                    if (!getMatchFromServer(leagueId).await()) {
                         // save into file --> cacheData
                         val fstream = FileOutputStream(cacheData)
                         val ostream = ObjectOutputStream(fstream)

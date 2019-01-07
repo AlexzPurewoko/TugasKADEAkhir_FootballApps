@@ -1,12 +1,14 @@
 package com.apwdevs.apps.football.activities.detailMatchs
 
 import android.content.pm.ActivityInfo
+import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.Menu
+import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
 import com.apwdevs.apps.football.R
@@ -20,15 +22,22 @@ import com.apwdevs.apps.football.activities.detailMatchs.ui.adapter.DetailMatchR
 import com.apwdevs.apps.football.activities.home.HomeActivity
 import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.api.ApiRepository
+import com.apwdevs.apps.football.database.MatchFavoriteData
+import com.apwdevs.apps.football.database.database
 import com.apwdevs.apps.football.utility.DialogShowHelper
 import com.apwdevs.apps.football.utility.MyDate
-import com.apwdevs.apps.football.utility.MyDate.getDate
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.google.gson.Gson
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_detail_match.*
 import kotlinx.android.synthetic.main.content_detail_match.*
+import org.jetbrains.anko.alert
 import org.jetbrains.anko.clearTask
+import org.jetbrains.anko.db.classParser
+import org.jetbrains.anko.db.delete
+import org.jetbrains.anko.db.insert
+import org.jetbrains.anko.db.select
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
 
@@ -91,6 +100,11 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        favoriteState()
+    }
+
     private fun prepareLayout() {
         homeLogo = content_match_detail_id_home_logoteam
         awayLogo = content_match_detail_id_away_logoteam
@@ -136,12 +150,104 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         scoreAway.text = matchDetails.intAwayScore ?: "-"
         Picasso.get().load(teamProps[0].strTeamBadge).resize(100, 100).into(homeLogo)
         Picasso.get().load(teamProps[1].strTeamBadge).resize(100, 100).into(awayLogo)
-        dateText.text = getDate(matchDetails.dateEvent, "yyyy-MM-dd")
-        timeText.text = MyDate.getTimeInGMT7(matchDetails.timeEvent)
+
+        val currentCalendar = MyDate.getCalendarInGMT7(matchDetails.timeEvent, matchDetails.dateEvent, "yyyy-MM-dd")
+        dateText.text = MyDate.getDateFromCalendar(currentCalendar)//getDate(matchDetails.dateEvent, "yyyy-MM-dd")
+        timeText.text = MyDate.getTimeFromCalendar(currentCalendar)//MyDate.getTimeInGMT7(matchDetails.timeEvent)
     }
 
     override fun onFailedLoadingData(what: String) {
+        alert(what, "Error") {
+            iconResource = R.drawable.ic_report_problem
+            negativeButton("Quit!") {
+                it.dismiss()
+                this@DetailMatchActivity.finish()
+            }
+        }.show()
     }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+
+        menuInflater.inflate(R.menu.menu_details, menu)
+        menuItem = menu
+        setFavorite()
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return when (item?.itemId) {
+            R.id.action_favorite -> {
+                if (isFavorite) removeFromFavorite() else addToFavorite()
+                isFavorite = !isFavorite
+                setFavorite()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+
+    private fun favoriteState() {
+        database.use {
+            val result = select(MatchFavoriteData.TABLE_MATCH_FAVORITE)
+                .whereArgs(
+                    "(${MatchFavoriteData.ID_LEAGUE} = {id} AND ${MatchFavoriteData.ID_EVENT} = {event})",
+                    "id" to idLeague,
+                    "event" to idMatch
+                )
+            val favorites = result.parseList(classParser<MatchFavoriteData>())
+
+            if (!favorites.isEmpty()) isFavorite = true
+        }
+    }
+
+    private fun setFavorite() {
+        if (isFavorite)
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, R.drawable.ic_added_to_favorites)
+        else
+            menuItem?.getItem(0)?.icon = ContextCompat.getDrawable(this, R.drawable.ic_add_to_favorites)
+    }
+
+    private fun addToFavorite() {
+        try {
+            database.use {
+                insert(
+                    MatchFavoriteData.TABLE_MATCH_FAVORITE,
+                    MatchFavoriteData.ID_LEAGUE to idLeague,
+                    MatchFavoriteData.ID_EVENT to idMatch,
+                    MatchFavoriteData.LEAGUE_NAME to nameLeague,
+                    MatchFavoriteData.DATE_EVENT to matchDetails.dateEvent,
+                    MatchFavoriteData.TIME_EVENT to matchDetails.timeEvent,
+                    MatchFavoriteData.HOME_TEAM to matchDetails.strHomeTeam,
+                    MatchFavoriteData.HOME_SCORE to matchDetails.intHomeScore?.toInt(),
+                    MatchFavoriteData.AWAY_TEAM to matchDetails.strAwayTeam,
+                    MatchFavoriteData.AWAY_SCORE to matchDetails.intAwayScore?.toInt()
+                )
+            }
+            recyclerView.snackbar(ParameterClass.STRING_ADD_INTO_DATABASE).show()
+        } catch (e: SQLiteConstraintException) {
+            recyclerView.snackbar(e.localizedMessage).show()
+
+        }
+    }
+
+    private fun removeFromFavorite() {
+        try {
+            database.use {
+                delete(
+                    MatchFavoriteData.TABLE_MATCH_FAVORITE,
+                    "(${MatchFavoriteData.ID_LEAGUE} = {id} AND ${MatchFavoriteData.ID_EVENT} = {event})",
+                    "id" to idLeague,
+                    "event" to idMatch
+                )
+            }
+            recyclerView.snackbar(ParameterClass.STRING_REMOVE_FROM_DATABASE).show()
+        } catch (e: SQLiteConstraintException) {
+            recyclerView.snackbar(e.localizedMessage).show()
+        }
+    }
+
+
 
     override fun onBackPressed() {
         finish()

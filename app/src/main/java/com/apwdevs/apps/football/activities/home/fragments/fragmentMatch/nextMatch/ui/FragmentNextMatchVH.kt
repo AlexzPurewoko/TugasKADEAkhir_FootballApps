@@ -6,6 +6,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import com.apwdevs.apps.football.R.id.*
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataController.MatchLeagueData
+import com.apwdevs.apps.football.utility.AddToCalendar
 import com.apwdevs.apps.football.utility.MyDate
 
 class FragmentNextMatchVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -18,12 +19,22 @@ class FragmentNextMatchVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
     private val awayScoreTeam: TextView = itemView.findViewById(adapter_cardview_footballmatch_id_teamscore_right)
 
     fun bindItem(item: MatchLeagueData, listener: (MatchLeagueData) -> Unit) {
-        date.text = MyDate.getDate(item.date, "dd/MM/yyyy")
-        time.text = MyDate.getTimeInGMT7(item.time)
+        val currentCalendar = MyDate.getCalendarInGMT7(item.time, item.date, "dd/MM/yyyy")
+        date.text = MyDate.getDateFromCalendar(currentCalendar)//MyDate.getDate(item.date, "dd/MM/yyyy")
+        time.text = MyDate.getTimeFromCalendar(currentCalendar)//MyDate.getTimeInGMT7(item.time)
         homeNameTeam.text = item.homeTeamName
         homeScoreTeam.text = item.homeTeamScore
         awayNameTeam.text = item.awayTeamName
         awayScoreTeam.text = item.awayTeamScore
+        clockAdd.setOnClickListener {
+            AddToCalendar.add(
+                itemView.context,
+                "${item.homeTeamName} vs ${item.awayTeamName}",
+                "Next Match League! ${item.homeTeamName} vs ${item.awayTeamName}. Please reminder me!",
+                item.time!!,
+                item.date!!
+            )
+        }
         itemView.setOnClickListener {
             listener(item)
         }

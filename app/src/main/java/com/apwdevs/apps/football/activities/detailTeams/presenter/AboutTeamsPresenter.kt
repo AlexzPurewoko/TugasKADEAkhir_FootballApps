@@ -55,7 +55,7 @@ class AboutTeamsPresenter(
 
                 } else {
                     val data = getDataBehaviourFromInet(teamId).await()
-                    if (data) {
+                    if (!data) {
                         // save into file --> cacheFilesTeams
                         var fstream = FileOutputStream(cacheFilesTeams)
                         var ostream = ObjectOutputStream(fstream)
