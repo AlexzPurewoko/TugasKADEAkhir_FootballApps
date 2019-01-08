@@ -1,20 +1,21 @@
 package com.apwdevs.apps.football.activities.detailTeams.fragments
 
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.utility.ParameterClass
-import org.jetbrains.anko.*
 
-class OverviewFragment : Fragment(), AnkoComponent<Context> {
+class OverviewFragment : Fragment() {
 
     private lateinit var textView: TextView
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return createView(AnkoContext.create(requireContext()))
+        val layout = inflater.inflate(R.layout.fragment_overview_about_teams, container, false)
+        textView = layout.findViewById(R.id.fragment_team_overview_text)
+        return layout
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -23,13 +24,6 @@ class OverviewFragment : Fragment(), AnkoComponent<Context> {
         textView.text = text
     }
 
-    override fun createView(ui: AnkoContext<Context>): View = with(ui) {
-        scrollView {
-            lparams(width = matchParent, height = wrapContent)
-            padding = dip(16)
-            textView = textView { }.lparams(width = matchParent, height = wrapContent)
-        }
-    }
 
     companion object {
         fun newInstance(description: String): OverviewFragment {

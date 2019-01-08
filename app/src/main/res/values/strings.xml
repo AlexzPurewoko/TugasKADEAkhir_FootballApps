@@ -14,4 +14,14 @@
     <string name="player_images">Player Images</string>
     <string name="str_wait">Tunggu Sebentar</string>
     <string name="add_to_favorites">Add To Favorites</string>
+    <string name="search">Cari di sini</string>
+    <string name="search_hint">Mau cari apa?</string>
+    <string name="aboutteams_tab_title_overview">Overview</string>
+    <string name="aboutteams_tab_title_details">Details</string>
+    <string name="aboutteams_tab_title_player">Player</string>
+    <string name="aboutteams_teambadge_contentdesc">Team badges</string>
+    <string name="fragment_favorites_tab_title_match">Match</string>
+    <string name="fragment_favorites_tab_title_teams">Teams</string>
+    <string name="fragment_match_tab_title_next">Next</string>
+    <string name="fragment_match_tab_title_past">Past</string>
 </resources>

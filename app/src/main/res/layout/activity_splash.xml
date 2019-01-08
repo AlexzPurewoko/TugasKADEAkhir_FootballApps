@@ -11,7 +11,8 @@
             android:id="@+id/splash_relative_loading"
             android:layout_width="match_parent"
             android:layout_alignParentBottom="true"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            tools:ignore="UselessParent">
         <TextView
                 android:text="@string/splash_string_loading_data"
                 android:layout_width="match_parent"

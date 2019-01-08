@@ -62,12 +62,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_weight="3">
+                        android:layout_weight="3"
+                        tools:ignore="UseCompoundDrawables">
                     <ImageView
                             android:layout_gravity="center"
                             android:id="@+id/content_match_detail_id_home_logoteam"
                             android:layout_width="100dp"
-                            android:layout_height="100dp"/>
+                            android:layout_height="100dp"
+                            tools:ignore="ContentDescription"/>
                     <TextView
                             android:layout_marginTop="10dp"
                             android:id="@+id/content_match_detail_id_teamname_left"
@@ -123,12 +125,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:layout_weight="3">
+                        android:layout_weight="3"
+                        tools:ignore="UseCompoundDrawables">
                     <ImageView
                             android:layout_gravity="center"
                             android:id="@+id/content_match_detail_id_away_logoteam"
                             android:layout_width="100dp"
-                            android:layout_height="100dp"/>
+                            android:layout_height="100dp"
+                            tools:ignore="ContentDescription"/>
                     <TextView
                             android:layout_marginTop="10dp"
                             android:id="@+id/content_match_detail_id_teamname_right"

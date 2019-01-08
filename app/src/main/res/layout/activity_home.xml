@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<android.support.design.widget.CoordinatorLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
         tools:context=".activities.home.HomeActivity">
 
     <android.support.design.widget.AppBarLayout
@@ -12,44 +13,51 @@
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             app:elevation="0dp"
+            android:fitsSystemWindows="true"
             android:theme="@style/AppTheme.AppBarOverlay">
 
-        <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
+        <android.support.design.widget.CollapsingToolbarLayout
+                android:id="@+id/collapse_toolbar"
+                app:layout_scrollFlags="scroll|enterAlways"
+                app:contentScrim="?attr/colorPrimary"
+                android:fitsSystemWindows="true"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                app:popupTheme="@style/AppTheme.PopupOverlay"/>
+                android:layout_height="match_parent">
+            <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="?attr/colorPrimary"
+                    app:layout_collapseMode="none"
+                    app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+        </android.support.design.widget.CollapsingToolbarLayout>
 
     </android.support.design.widget.AppBarLayout>
-    <RelativeLayout
-            android:layout_below="@id/home_appbar"
+    <android.support.v4.view.ViewPager
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:id="@+id/container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-        <android.support.v4.view.ViewPager
-                android:id="@+id/container"
+            android:layout_height="match_parent"/>
+    <LinearLayout
+
+            android:id="@+id/bottom_layout"
+            app:layout_anchor="@id/container"
+            app:layout_anchorGravity="bottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+        <View
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_above="@id/bottom_layout"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
-        <LinearLayout
-                android:id="@+id/bottom_layout"
+                android:layout_height="4dp"
+                android:background="@drawable/shadow"/>
+        <android.support.design.widget.BottomNavigationView
+                android:id="@+id/bottom_navigation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_alignParentBottom="true">
-            <View
-                    android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:background="@drawable/shadow"/>
-            <android.support.design.widget.BottomNavigationView
-                    android:id="@+id/bottom_navigation"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/white"
-                    app:itemIconTint="@drawable/nav_item_color_state"
-                    app:itemTextColor="@drawable/nav_item_color_state"
-                    app:menu="@menu/bottom_navigation_menu"/>
-        </LinearLayout>
-    </RelativeLayout>
-</RelativeLayout>
+                android:background="@android:color/white"
+                app:itemIconTint="@drawable/nav_item_color_state"
+                app:itemTextColor="@drawable/nav_item_color_state"
+                app:menu="@menu/bottom_navigation_menu"/>
+    </LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

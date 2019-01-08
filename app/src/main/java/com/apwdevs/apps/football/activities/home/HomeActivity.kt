@@ -1,11 +1,15 @@
 package com.apwdevs.apps.football.activities.home
 
+import android.app.SearchManager
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.SearchView
+import android.view.Menu
 import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.home.fragments.fragmentFavorites.FavoritesFragment
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.MatchFragments
@@ -24,6 +28,9 @@ class HomeActivity : AppCompatActivity() {
 
         val mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, receiver)
 
+        val collapsing = collapse_toolbar
+        collapsing.isTitleEnabled = false
+        toolbar.title = title
         container.adapter = mSectionsPagerAdapter
         bottom_navigation.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -64,6 +71,18 @@ class HomeActivity : AppCompatActivity() {
         //container.offscreenPageLimit = 3
         container.setCurrentItem(0, true)
         supportActionBar?.elevation = 0f
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_with_search, menu)
+        val searchItem = menu?.findItem(R.id.action_search)
+        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+        var searchView: SearchView? = null
+        if (searchItem != null)
+            searchView = searchItem.actionView as SearchView
+        searchView?.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+
+        return super.onCreateOptionsMenu(menu)
     }
 
     inner class SectionsPagerAdapter(fm: FragmentManager, private val leagues: List<TeamLeagueData>) :

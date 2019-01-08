@@ -17,13 +17,13 @@
                 app:tabGravity="fill">
             <android.support.design.widget.TabItem
                     android:id="@+id/favorites_match"
-                    android:text="Match"
+                    android:text="@string/fragment_favorites_tab_title_match"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
             <android.support.design.widget.TabItem
                     android:id="@+id/favorites_teams"
-                    android:text="Teams"
+                    android:text="@string/fragment_favorites_tab_title_teams"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
         </android.support.design.widget.TabLayout>

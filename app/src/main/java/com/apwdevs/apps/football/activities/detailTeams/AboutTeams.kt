@@ -75,6 +75,18 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         viewPagerContainer = activity_aboutteams_conteiner
         viewPagerContainer.offscreenPageLimit = 4
         ////////////////////
+        activity_aboutteams_appbar.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
+            val maxAlpha = 1.0f
+            val maxScroll = appBarLayout.totalScrollRange
+            val percentage = Math.abs(verticalOffset).toFloat() / maxScroll.toFloat()
+            val retAlpha = maxAlpha - percentage
+            teamBadges.alpha = retAlpha
+            teamName.alpha = retAlpha
+            teamFormedYear.alpha = retAlpha
+            teamStadiumName.alpha = retAlpha
+
+
+        }
 
         // init presenter
         teamId = intent.getStringExtra(ParameterClass.ID_SELECTED_TEAMS)
@@ -246,11 +258,6 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
 
     override fun onBackPressed() {
         finish()
-        /*startActivity(
-            intentFor<HomeActivity>(
-                ParameterClass.LIST_LEAGUE_DATA to leagues
-            ).clearTask()
-        )*/
     }
 
     override fun onSupportNavigateUp(): Boolean {

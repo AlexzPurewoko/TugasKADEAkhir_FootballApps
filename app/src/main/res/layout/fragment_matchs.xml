@@ -17,13 +17,13 @@
                 app:tabGravity="fill">
             <android.support.design.widget.TabItem
                     android:id="@+id/next_match"
-                    android:text="Next"
+                    android:text="@string/fragment_match_tab_title_next"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
             <android.support.design.widget.TabItem
                     android:id="@+id/last_match"
-                    android:text="Past"
+                    android:text="@string/fragment_match_tab_title_past"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
         </android.support.design.widget.TabLayout>
