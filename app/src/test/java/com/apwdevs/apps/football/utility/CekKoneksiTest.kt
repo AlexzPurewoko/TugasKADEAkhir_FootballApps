@@ -35,7 +35,7 @@ class CekKoneksiTest {
         val cekKoneksi = mock(CekKoneksi::class.java)
         val cProvider = TestCoroutineContextProvider()
         runBlocking(cProvider.main) {
-            cekKoneksi.isReachableNetworks(BuildConfig.BASE_URL, coroutineContextProvider = cProvider)
+            val result = cekKoneksi.isReachableNetworks(BuildConfig.BASE_URL, coroutineContextProvider = cProvider)
             Mockito.verify(cekKoneksi).isReachableNetworks(BuildConfig.BASE_URL, coroutineContextProvider = cProvider)
         }
     }

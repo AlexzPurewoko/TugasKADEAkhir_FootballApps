@@ -12,12 +12,16 @@ import android.view.ViewGroup
 import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.home.fragments.fragmentFavorites.matchsFavorites.MatchFavoriteFragment
 import com.apwdevs.apps.football.activities.home.fragments.fragmentFavorites.teamsFavorites.TeamFavoriteFragment
+import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallback
 import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.utility.ParameterClass
+import com.apwdevs.apps.football.utility.gone
+import com.apwdevs.apps.football.utility.visible
 import kotlinx.android.synthetic.main.fragment_favorites.*
 
-class FavoritesFragment : Fragment() {
+class FavoritesFragment : Fragment(), FragmentHomeCallback {
+
     private lateinit var viewPagerHolder: ViewPager
     private lateinit var fragmentAdapter: FragmentStateFavoriteAdapter
     private lateinit var tabLayout: TabLayout
@@ -66,6 +70,27 @@ class FavoritesFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return LayoutInflater.from(requireContext()).inflate(R.layout.fragment_favorites, container, false)
+    }
+
+    fun getListener(): FragmentHomeCallback =
+        fragmentAdapter.getItem(viewPagerHolder.currentItem) as FragmentHomeCallback
+
+    override fun transactionData(what: String) = getListener().transactionData(what)
+
+    override fun onQueryTextSubmit(query: String?): Boolean = getListener().onQueryTextSubmit(query)
+
+    override fun onQueryTextChange(newText: String?): Boolean = getListener().onQueryTextChange(newText)
+
+    override fun onActionViewCollapsed() {
+        tabLayout.visible()
+    }
+
+    override fun onActionViewExpanded() {
+        tabLayout.gone()
+    }
+
+    override fun onDetachedFromWindow() {
+
     }
 
     inner class FragmentStateFavoriteAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {

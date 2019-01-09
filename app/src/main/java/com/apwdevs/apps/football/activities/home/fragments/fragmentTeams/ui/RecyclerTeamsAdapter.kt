@@ -2,11 +2,44 @@ package com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.ui
 
 import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
+import android.widget.Filter
+import android.widget.Filterable
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.dataController.TeamData
 import org.jetbrains.anko.AnkoContext
 
-class RecyclerTeamsAdapter(private val teams: List<TeamData>, private val listener: (TeamData) -> Unit) :
-    RecyclerView.Adapter<RecyclerTeamsVH>() {
+class RecyclerTeamsAdapter(private val teams: MutableList<TeamData>, private val listener: (TeamData) -> Unit) :
+    RecyclerView.Adapter<RecyclerTeamsVH>(), Filterable {
+
+    private var mFilteredTeams: MutableList<TeamData> = teams
+
+    override fun getFilter(): Filter = object : Filter() {
+        override fun performFiltering(constraint: CharSequence?): FilterResults {
+            val charString = constraint.toString()
+
+            mFilteredTeams = if (charString.isEmpty())
+                teams else {
+
+                val filteredList = mutableListOf<TeamData>()
+                filteredList.clear()
+                for (team in teams) {
+                    if (team.teamName?.contains(charString, true)!!)
+                        filteredList.add(team)
+                }
+
+                filteredList
+            }
+
+            val filterResults = FilterResults()
+            filterResults.values = mFilteredTeams
+            return filterResults
+        }
+
+        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+            mFilteredTeams = results?.values as MutableList<TeamData>
+            notifyDataSetChanged()
+        }
+
+    }
 
     init {
         setHasStableIds(true)
@@ -21,10 +54,10 @@ class RecyclerTeamsAdapter(private val teams: List<TeamData>, private val listen
         return RecyclerTeamsVH(layout)
     }
 
-    override fun getItemCount(): Int = teams.size
+    override fun getItemCount(): Int = mFilteredTeams.size
 
     override fun onBindViewHolder(holder: RecyclerTeamsVH, position: Int) {
-        holder.bindItem(teams[position], listener)
+        holder.bindItem(mFilteredTeams[position], listener)
     }
 
 }

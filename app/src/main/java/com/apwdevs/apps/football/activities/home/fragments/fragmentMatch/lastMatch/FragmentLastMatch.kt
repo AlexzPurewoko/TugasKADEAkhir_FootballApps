@@ -20,6 +20,7 @@ import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMat
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.ui.FragmentLastMatchModel
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.ui.FragmentLastMatchRA
 import com.apwdevs.apps.football.activities.home.fragments.ui.FragmentUI
+import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallback
 import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.api.ApiRepository
@@ -35,7 +36,7 @@ import org.jetbrains.anko.find
 import org.jetbrains.anko.support.v4.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
 
-class FragmentLastMatch : Fragment(), FragmentLastMatchModel {
+class FragmentLastMatch : Fragment(), FragmentLastMatchModel, FragmentHomeCallback {
 
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var recyclerView: RecyclerView
@@ -121,6 +122,31 @@ class FragmentLastMatch : Fragment(), FragmentLastMatchModel {
         allMatchInLeague.clear()
         allMatchInLeague.addAll(leagues.events)
         recyclerAdapter.notifyDataSetChanged()
+    }
+
+    override fun transactionData(what: String) {
+
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        return false
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        recyclerAdapter.filter.filter(newText)
+        return true
+    }
+
+    override fun onActionViewCollapsed() {
+
+    }
+
+    override fun onActionViewExpanded() {
+
+    }
+
+    override fun onDetachedFromWindow() {
+
     }
 
     companion object {

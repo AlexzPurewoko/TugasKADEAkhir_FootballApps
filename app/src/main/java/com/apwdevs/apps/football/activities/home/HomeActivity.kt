@@ -3,6 +3,8 @@ package com.apwdevs.apps.football.activities.home
 import android.app.SearchManager
 import android.content.Context
 import android.os.Bundle
+import android.support.design.widget.AppBarLayout
+import android.support.design.widget.CollapsingToolbarLayout
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
@@ -14,11 +16,16 @@ import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.home.fragments.fragmentFavorites.FavoritesFragment
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.MatchFragments
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.FragmentTeams
+import com.apwdevs.apps.football.activities.home.homeUtility.CustomSearchView
+import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallback
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.utility.ParameterClass
 import kotlinx.android.synthetic.main.activity_home.*
+import org.jetbrains.anko.toast
 
 class HomeActivity : AppCompatActivity() {
+
+    private lateinit var mSectionsPagerAdapter: SectionsPagerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +33,7 @@ class HomeActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         val receiver = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as List<TeamLeagueData>
 
-        val mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, receiver)
+        mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, receiver)
 
         val collapsing = collapse_toolbar
         collapsing.isTitleEnabled = false
@@ -40,6 +47,12 @@ class HomeActivity : AppCompatActivity() {
                 }
                 R.id.menu_teams -> {
                     container.setCurrentItem(1, true)
+                    val fragment = mSectionsPagerAdapter.getItem(container.currentItem)
+                    if (container.currentItem == 1) {
+                        val k: FragmentTeams = fragment as FragmentTeams
+                        val i: FragmentHomeCallback = k
+                        i.transactionData("Hanya Coba - coba saja.... wkwkwkwk :)")
+                    }
                     true
                 }
                 else -> {
@@ -77,17 +90,95 @@ class HomeActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.menu_with_search, menu)
         val searchItem = menu?.findItem(R.id.action_search)
         val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
-        var searchView: SearchView? = null
+        var searchView: CustomSearchView? = null
         if (searchItem != null)
-            searchView = searchItem.actionView as SearchView
-        searchView?.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+            searchView = searchItem.actionView as CustomSearchView
 
+        searchView?.queryHint = when (container.currentItem) {
+            0 -> "Cari Match..."
+            1 -> "Cari Team..."
+            2 -> "Temukan Match/Team Favorit anda"
+            else -> "Search..."
+        }
+        searchView?.onSearchCallback = object : CustomSearchView.CustomSearchViewCallback {
+            override fun onActionViewCollapsed() {
+                // force to collapse back the toolbar
+                val previousParams = toolbar.layoutParams
+                val previousCollapseParams = collapse_toolbar.layoutParams
+                val collapseParams: CollapsingToolbarLayout.LayoutParams = CollapsingToolbarLayout.LayoutParams(
+                    previousParams.width,
+                    previousParams.height
+                )
+
+                val collapseModeCollapseParams: AppBarLayout.LayoutParams = AppBarLayout.LayoutParams(
+                    previousCollapseParams
+                )
+                collapseParams.collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_PARALLAX
+                collapseModeCollapseParams.scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS or
+                        AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                toolbar.layoutParams = collapseParams
+                collapse_toolbar.layoutParams = collapseModeCollapseParams
+                toolbar.requestLayout()
+                collapse_toolbar.requestLayout()
+                home_appbar.requestLayout()
+
+                // broadcast a callback
+                getListener().onActionViewCollapsed()
+            }
+
+            override fun onActionViewExpanded() {
+                // force to always expand the toolbar
+                val previousParams = toolbar.layoutParams
+                val previousCollapseParams = collapse_toolbar.layoutParams
+                val expandMode: CollapsingToolbarLayout.LayoutParams = CollapsingToolbarLayout.LayoutParams(
+                    previousParams
+                )
+
+                val expandModeCollapseParams: AppBarLayout.LayoutParams = AppBarLayout.LayoutParams(
+                    previousCollapseParams
+                )
+                expandModeCollapseParams.scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+                expandMode.collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_PIN
+                toolbar.layoutParams = expandMode
+                collapse_toolbar.layoutParams = expandModeCollapseParams
+                toolbar.requestLayout()
+                collapse_toolbar.requestLayout()
+                home_appbar.requestLayout()
+
+                //broadcast a callback
+                getListener().onActionViewExpanded()
+            }
+
+            override fun onDetachedFromWindow() {
+                //toast("onDetachedFromWindow()")
+                getListener().onDetachedFromWindow()
+            }
+
+        }
+        searchView?.setOnSearchClickListener {
+            toast("onClickListenerSearch()")
+        }
+        searchView?.setOnCloseListener {
+            toast("onCloseListener()").show()
+            false
+        }
+        searchView?.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+
+            override fun onQueryTextSubmit(p0: String?): Boolean = getListener().onQueryTextSubmit(p0)
+
+            override fun onQueryTextChange(p0: String?): Boolean = getListener().onQueryTextChange(p0)
+
+        })
         return super.onCreateOptionsMenu(menu)
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager, private val leagues: List<TeamLeagueData>) :
+    fun getListener(): FragmentHomeCallback =
+        mSectionsPagerAdapter.getItem(container.currentItem) as FragmentHomeCallback
+
+    inner class SectionsPagerAdapter(fm: FragmentManager, leagues: List<TeamLeagueData>) :
         FragmentPagerAdapter(fm) {
-        private val fragments = arrayListOf(
+        private val fragments: ArrayList<Fragment> = arrayListOf(
             MatchFragments.newInstance(leagues),
             FragmentTeams.newInstance(leagues),
             FavoritesFragment.newInstance(leagues)

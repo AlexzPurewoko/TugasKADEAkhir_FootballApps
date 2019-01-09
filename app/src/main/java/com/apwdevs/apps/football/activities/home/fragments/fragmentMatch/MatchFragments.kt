@@ -12,16 +12,19 @@ import android.view.ViewGroup
 import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.FragmentLastMatch
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.nextMatch.FragmentNextMatch
+import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallback
 import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.utility.ParameterClass
+import com.apwdevs.apps.football.utility.gone
+import com.apwdevs.apps.football.utility.visible
 
-class MatchFragments : Fragment() {
+class MatchFragments : Fragment(), FragmentHomeCallback {
 
     private lateinit var tabLayout: TabLayout
     private lateinit var viewpagerContainer: ViewPager
     private lateinit var leagues: LeagueResponse
-
+    private lateinit var adapter: FragmentStateMatchAdapter
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val layout = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_matchs, container, false)
         tabLayout = layout.findViewById(R.id.fragment_match_id_tabLayout)
@@ -32,7 +35,8 @@ class MatchFragments : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         leagues = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
-        viewpagerContainer.adapter = FragmentStateMatchAdapter(fragmentManager!!)
+        adapter = FragmentStateMatchAdapter(fragmentManager!!)
+        viewpagerContainer.adapter = adapter
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabReselected(tab: TabLayout.Tab?) {
 
@@ -66,8 +70,34 @@ class MatchFragments : Fragment() {
 
     }
 
+    override fun onActionViewCollapsed() {
+        tabLayout.visible()
+    }
+
+    override fun onActionViewExpanded() {
+        tabLayout.gone()
+    }
+
+    override fun onDetachedFromWindow() {
+
+    }
+
+    fun getListener(): FragmentHomeCallback = adapter.getItem(viewpagerContainer.currentItem) as FragmentHomeCallback
+
+    override fun transactionData(what: String) {
+
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        return getListener().onQueryTextSubmit(query)
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        return getListener().onQueryTextChange(newText)
+    }
+
     inner class FragmentStateMatchAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
-        private val fragments = arrayListOf(
+        private val fragments = arrayListOf<Fragment>(
             FragmentNextMatch.newInstance(leagues = leagues),
             FragmentLastMatch.newInstance(leagues = leagues)
         )

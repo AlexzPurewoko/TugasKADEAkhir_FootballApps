@@ -14,9 +14,13 @@ class FragmentUI : AnkoComponent<Context> {
     override fun createView(ui: AnkoContext<Context>): View = with(ui) {
         linearLayout {
             lparams(width = matchParent, height = matchParent)
+
+            val actionBarSizeAttrs = ctx.theme.obtainStyledAttributes(intArrayOf(R.attr.actionBarSize))
+            val actBarSizes = actionBarSizeAttrs.getDimension(0, 0.0f)
+            actionBarSizeAttrs.recycle()
             orientation = LinearLayout.VERTICAL
             topPadding = dip(10)
-            bottomPadding = dip(10)
+            bottomPadding = Math.round(actBarSizes)
             leftPadding = dip(10)
             rightPadding = dip(10)
             spinner {
@@ -32,6 +36,7 @@ class FragmentUI : AnkoComponent<Context> {
                 )
                 relativeLayout {
                     lparams(width = matchParent, height = wrapContent)
+                    bottomPadding = Math.round(ctx.resources.getDimension(R.dimen.dimen_fragment_home_vpager_bottom))
 
                     recyclerView {
                         id = R.id.fragment_match_recyclerholder

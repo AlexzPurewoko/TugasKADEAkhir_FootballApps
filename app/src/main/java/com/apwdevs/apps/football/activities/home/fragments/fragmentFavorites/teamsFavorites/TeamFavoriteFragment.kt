@@ -17,6 +17,7 @@ import android.widget.LinearLayout
 import com.apwdevs.apps.football.activities.detailTeams.AboutTeams
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.dataController.TeamData
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.ui.RecyclerTeamsAdapter
+import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallback
 import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.database.TeamFavoriteData
 import com.apwdevs.apps.football.utility.ParameterClass
@@ -29,8 +30,7 @@ import org.jetbrains.anko.support.v4.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
 import org.jetbrains.anko.support.v4.swipeRefreshLayout
 
-class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamModel {
-
+class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamModel, FragmentHomeCallback {
 
     private lateinit var cardWhenNull: CardView
     private lateinit var recyclerView: RecyclerView
@@ -134,6 +134,32 @@ class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamM
         return result
 
     }
+
+    override fun transactionData(what: String) {
+
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        return false
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        recyclerAdapter.filter.filter(newText)
+        return true
+    }
+
+    override fun onActionViewCollapsed() {
+
+    }
+
+    override fun onActionViewExpanded() {
+
+    }
+
+    override fun onDetachedFromWindow() {
+
+    }
+
 
     companion object {
         fun newInstance(leagues: LeagueResponse): TeamFavoriteFragment {

@@ -1,2 +1,3 @@
 <resources>
+    <dimen name="dimen_fragment_home_vpager_bottom">10dp</dimen>
 </resources>

@@ -14,9 +14,13 @@ class SearchResultActivity : AppCompatActivity() {
         setContentView(R.layout.activity_search_result)
 
         if (intent.action == Intent.ACTION_SEARCH) {
-            intent.getStringExtra(SearchManager.QUERY)?.also { query ->
+
+            val query = intent.getStringExtra(SearchManager.QUERY)?.also { query ->
                 toast("query : $query").show()
             }
+
+            val reqIntent = intent
+
         }
     }
 }
