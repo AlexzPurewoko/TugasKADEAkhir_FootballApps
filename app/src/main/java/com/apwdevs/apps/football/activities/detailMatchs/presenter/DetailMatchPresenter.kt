@@ -5,8 +5,9 @@ import com.apwdevs.apps.football.activities.detailMatchs.apiRequest.GetMatchDeta
 import com.apwdevs.apps.football.activities.detailMatchs.dataController.*
 import com.apwdevs.apps.football.activities.detailMatchs.ui.DetailMatchModel
 import com.apwdevs.apps.football.api.ApiRepository
-import com.apwdevs.apps.football.utility.CekKoneksi
+import com.apwdevs.apps.football.utility.AvailableDataUpdates
 import com.apwdevs.apps.football.utility.CoroutineContextProvider
+import com.apwdevs.apps.football.utility.ResultConnection
 import com.google.gson.Gson
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -19,7 +20,6 @@ class DetailMatchPresenter(
     private val apiRepository: ApiRepository,
     private val model: DetailMatchModel,
     private val gson: Gson,
-    private val enableCaching: Boolean = true,
     private val isTesting: Boolean = false,
     private val contextPool: CoroutineContextProvider = CoroutineContextProvider()
 ) {
@@ -27,15 +27,44 @@ class DetailMatchPresenter(
     var msg: String? = null
     var dataTeam: MutableList<TeamPropData>? = null
     var recyclerData: MutableList<DataPropertyRecycler>? = null
+    var countUserRefresh = 0
 
     fun getData(eventId: String) {
         model.showLoading()
         GlobalScope.launch(contextPool.main) {
-            if (enableCaching) {
-                val cacheTeams = File(ctx.cacheDir, "teams_event$eventId")
-                val cacheData = File(ctx.cacheDir, "data_event$eventId")
-                if (cacheTeams.exists() && cacheData.exists()) {
+            val cacheTeams = File(ctx.cacheDir, "teams_event$eventId")
+            val cacheData = File(ctx.cacheDir, "data_event$eventId")
+            val preventUpdate =
+                AvailableDataUpdates.isAvailable(mutableListOf(cacheData, cacheTeams), isTesting, countUserRefresh++)
+                    .await()
+            var isSuccess = false
+            if (preventUpdate.preventToUpdate) {
+                if (!getDataFromServer(eventId).await()) {
+                    // save into file --> cacheTeams
+                    var fstream = FileOutputStream(cacheTeams)
+                    var ostream = ObjectOutputStream(fstream)
+                    ostream.writeObject(dataTeam!!)
+                    ostream.flush()
+                    fstream.flush()
+                    ostream.close()
+                    fstream.close()
 
+                    // save into file --> cacheData
+                    fstream = FileOutputStream(cacheData)
+                    ostream = ObjectOutputStream(fstream)
+                    ostream.writeObject(data!!)
+                    ostream.flush()
+                    fstream.flush()
+                    ostream.close()
+                    fstream.close()
+                    msg = preventUpdate.msg
+                    isSuccess = true
+                } else {
+                    msg = "Yahhh... Error saat ngambil data dari server... maaf yaa"
+                }
+            } else {
+
+                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheTeams
                     var fstream = FileInputStream(cacheTeams)
                     var istream = ObjectInputStream(fstream)
@@ -49,64 +78,30 @@ class DetailMatchPresenter(
                     data = istream.readObject() as DetailMatchResponse?
                     istream.close()
                     fstream.close()
-
-                    if (dataTeam != null && data != null) {
-                        recyclerData = getDataRecycler(data?.events!![0])
-                        if (recyclerData == null) {
-                            msg = "RecyclerData is null"
-                        }
-                    } else
-                        msg = "Can't gets the data from disk!"
-
-                } else {
-                    if (!getDataFromServer(eventId).await()) {
-                        // save into file --> cacheTeams
-                        var fstream = FileOutputStream(cacheTeams)
-                        var ostream = ObjectOutputStream(fstream)
-                        ostream.writeObject(dataTeam!!)
-                        ostream.flush()
-                        fstream.flush()
-                        ostream.close()
-                        fstream.close()
-
-                        // save into file --> cacheData
-                        fstream = FileOutputStream(cacheData)
-                        ostream = ObjectOutputStream(fstream)
-                        ostream.writeObject(data!!)
-                        ostream.flush()
-                        fstream.flush()
-                        ostream.close()
-                        fstream.close()
-                    }
+                    recyclerData = getDataRecycler(data?.events!![0])
+                    isSuccess = true
                 }
-            } else
-                getDataFromServer(eventId).await()
+                msg = preventUpdate.msg
+            }
+
 
             if (isTesting)
                 Thread.sleep(1500)
             model.hideLoading()
-            if (msg != null) {
+            if (!isSuccess) {
                 model.onFailedLoadingData(msg!!)
             } else {
-                model.onSuccessLoadingData(data?.events!![0], dataTeam?.toList()!!, recyclerData!!)
+                model.onSuccessLoadingData(data?.events!![0], dataTeam?.toList()!!, recyclerData!!, msg!!)
             }
         }
     }
 
     fun getDataFromServer(eventId: String): Deferred<Boolean> = GlobalScope.async {
-        val connect = if (!isTesting) {
-            CekKoneksi.isConnected(ctx).await()
-        } else {
-            true
-        }
-        if (connect) {
-            data = gson.fromJson(
+        data = gson.fromJson(
                 apiRepository.doRequest(GetMatchDetailDataFromApi.getDetailMatchURL(eventId)).await(),
                 DetailMatchResponse::class.java
             )
-            if (data == null) {
-                msg = "Cannot load the data from Server"
-            } else {
+        if (data != null) {
                 val idHome = data?.events!![0].idHomeTeam
                 val idAway = data?.events!![0].idAwayTeam
                 val dataTeamHome = gson.fromJson(
@@ -122,12 +117,8 @@ class DetailMatchPresenter(
                 dataTeam?.add(dataTeamHome.teams[0])
                 dataTeam?.add(dataTeamAway.teams[0])
                 recyclerData = getDataRecycler(data?.events!![0])
-                if (recyclerData == null) {
-                    msg = "RecyclerData is null"
-                }
             }
-        }
-        msg != null
+        data == null
     }
 
     private fun getDataRecycler(data: DetailMatchDataClass): MutableList<DataPropertyRecycler> {

@@ -8,5 +8,10 @@ interface AboutTeamsModel {
     fun showLoading()
     fun hideLoading()
     fun onLoadCancelled(msg: String)
-    fun onLoadFinished(team: TeamsAbout, players: List<TeamMemberShortData>, recyclerDataSets: List<DetailRecyclerData>)
+    fun onLoadFinished(
+        team: TeamsAbout,
+        players: List<TeamMemberShortData>,
+        recyclerDataSets: List<DetailRecyclerData>,
+        msg: String
+    )
 }

@@ -114,11 +114,12 @@ class FragmentTeams : Fragment(), FragmentTeamsModel, FragmentHomeCallback {
         swipeRefresh.snackbar("Error : $msg").show()
     }
 
-    override fun onFullyLoaded(teams: List<TeamData>) {
+    override fun onFullyLoaded(teams: List<TeamData>, msg: String) {
         swipeRefresh.isRefreshing = false
         listTeam.clear()
         listTeam.addAll(teams)
         adapterRecyclerView.notifyDataSetChanged()
+        swipeRefresh.snackbar(msg)
     }
 
     override fun transactionData(what: String) {

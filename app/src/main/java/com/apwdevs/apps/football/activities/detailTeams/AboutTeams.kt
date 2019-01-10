@@ -38,6 +38,7 @@ import org.jetbrains.anko.db.delete
 import org.jetbrains.anko.db.insert
 import org.jetbrains.anko.db.select
 import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.support.v4.onRefresh
 
 class AboutTeams : AppCompatActivity(), AboutTeamsModel {
 
@@ -97,6 +98,9 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         setSupportActionBar(aboutteams_toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         presenter.getDataBehaviour(teamId)
+        activity_aboutteams_swiperefresh.onRefresh {
+            presenter.getDataBehaviour(teamId)
+        }
     }
 
     override fun onResume() {
@@ -132,6 +136,7 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
     }
 
     override fun onLoadCancelled(msg: String) {
+        activity_aboutteams_swiperefresh.isRefreshing = false
         alert(msg, "Error") {
             negativeButton("Okay") {
                 it.dismiss()
@@ -146,14 +151,14 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
     override fun onLoadFinished(
         team: TeamsAbout,
         players: List<TeamMemberShortData>,
-        recyclerDataSets: List<DetailRecyclerData>
+        recyclerDataSets: List<DetailRecyclerData>,
+        msg: String
     ) {
         this.teams = team
         this.players = players
         this.recyclerDataSets = recyclerDataSets
 
         Picasso.get().load(teams?.teamBadge).resize(150, 150).into(teamBadges)
-        //Picasso.get().load(teams?.stadiumImage).into(targetBAckgroundAppBar)
         teamName.text = teams?.teamName
         teamStadiumName.text = teams?.stadiumName
         teamFormedYear.text = teams?.formedOnYear
@@ -170,6 +175,7 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
             }
 
             override fun onPageSelected(p0: Int) {
+                activity_aboutteams_appbar.setExpanded(true, true)
                 tabLayout.getTabAt(p0)?.select()
             }
 
@@ -190,6 +196,8 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         supportActionBar?.title = "About ${team.teamName}"
         favoriteState()
         setFavorite()
+        activity_aboutteams_swiperefresh.isRefreshing = false
+        activity_aboutteams_swiperefresh.snackbar(msg)
     }
 
     inner class ViewPagerFragmentAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {

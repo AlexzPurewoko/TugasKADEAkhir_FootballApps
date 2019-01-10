@@ -10,7 +10,8 @@ interface DetailMatchModel {
     fun onSuccessLoadingData(
         matchData: DetailMatchDataClass,
         teamProps: List<TeamPropData>,
-        dataRecycler: MutableList<DataPropertyRecycler>
+        dataRecycler: MutableList<DataPropertyRecycler>,
+        msg: String
     )
 
     fun onFailedLoadingData(what: String)

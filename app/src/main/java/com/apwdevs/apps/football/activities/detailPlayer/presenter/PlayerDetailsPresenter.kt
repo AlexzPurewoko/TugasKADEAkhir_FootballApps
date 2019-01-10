@@ -8,8 +8,9 @@ import com.apwdevs.apps.football.activities.detailPlayer.ui.PlayerDetailsModel
 import com.apwdevs.apps.football.activities.detailTeams.dataController.DetailRecyclerData
 import com.apwdevs.apps.football.activities.detailTeams.dataController.PropertyRecyclerType
 import com.apwdevs.apps.football.api.ApiRepository
-import com.apwdevs.apps.football.utility.CekKoneksi
+import com.apwdevs.apps.football.utility.AvailableDataUpdates
 import com.apwdevs.apps.football.utility.CoroutineContextProvider
+import com.apwdevs.apps.football.utility.ResultConnection
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import java.io.*
@@ -27,27 +28,17 @@ class PlayerDetailsPresenter(
     private var playerDetails: PlayerDetailsDataResponse? = null
     private var msg: String? = null
     private val recyclerData: MutableList<DetailRecyclerData> = mutableListOf()
+    var countUserRefresh = 0
 
     fun getPlayerDetails(playerId: String) {
         model.showLoading()
         GlobalScope.launch(contextPool.main) {
+            val cachePlayers = File(ctx.cacheDir, "detail_player$playerId")
+            val preventUpdate =
+                AvailableDataUpdates.isAvailable(mutableListOf(cachePlayers), isTesting, countUserRefresh++).await()
+            var isSuccess = false
+            if (preventUpdate.preventToUpdate) {
 
-            if (enableCaching) {
-                val cachePlayers = File(ctx.cacheDir, "detail_player$playerId")
-                if (cachePlayers.exists()) {
-                    // read from --> cacheFilesTeams
-                    val fstream = FileInputStream(cachePlayers)
-                    val istream = ObjectInputStream(fstream)
-                    playerDetails = PlayerDetailsDataResponse(istream.readObject() as List<PlayersDetailData>)
-                    istream.close()
-                    fstream.close()
-
-                    // check if null, return a message
-                    if (playerDetails != null && playerDetails?.players != null) {
-                        getRecyclerData()
-                    } else
-                        msg = "Cannot open the data from Disks!"
-                } else {
                     if (!getPlayerDetailsFromInternet(playerId).await()) {
                         // save into file --> cacheFilesTeams
                         val fstream = FileOutputStream(cachePlayers)
@@ -57,38 +48,46 @@ class PlayerDetailsPresenter(
                         fstream.flush()
                         ostream.close()
                         fstream.close()
+                        msg = preventUpdate.msg
+                        isSuccess = true
+                    } else {
+                        msg = "Yahhh... Error saat ngambil data dari server... maaf yaa"
                     }
+            } else {
+                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
+                    // read from --> cacheFilesTeams
+                    val fstream = FileInputStream(cachePlayers)
+                    val istream = ObjectInputStream(fstream)
+                    playerDetails = PlayerDetailsDataResponse(istream.readObject() as List<PlayersDetailData>)
+                    istream.close()
+                    fstream.close()
+                    getRecyclerData()
+                    isSuccess = true
                 }
-            } else
-                getPlayerDetailsFromInternet(playerId).await()
+                msg = preventUpdate.msg
+            }
 
 
             if (isTesting) Thread.sleep(1000)
             else delay(1000)
             model.hideLoading()
-            if (msg != null)
+            if (!isSuccess)
                 model.onDataNotLoaded(msg!!)
             else {
-                model.onDataLoadFinished(playerDetails?.players!![0], recyclerData)
+                model.onDataLoadFinished(playerDetails?.players!![0], recyclerData, msg!!)
             }
         }
     }
 
     fun getPlayerDetailsFromInternet(playerId: String): Deferred<Boolean> = GlobalScope.async {
-        val koneksi = if (isTesting) true else CekKoneksi.isConnected(ctx).await()
-        if (koneksi) {
-
             if (getDetails(playerId).await()) {
                 // success then load the recycler data
                 getRecyclerData()
+                false
             } else {
                 msg = "Cannot establish player data from server\nSorry :("
+                true
             }
-
-        } else {
-            msg = "Connection lost!, please enable you connection first\n:("
-        }
-        msg != null
     }
 
     fun getDetails(playerId: String): Deferred<Boolean> = GlobalScope.async {

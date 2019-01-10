@@ -6,9 +6,10 @@ import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.activities.splash.ui.SplashModel
 import com.apwdevs.apps.football.api.ApiRepository
-import com.apwdevs.apps.football.utility.CekKoneksi
+import com.apwdevs.apps.football.utility.AvailableDataUpdates
 import com.apwdevs.apps.football.utility.CoroutineContextProvider
 import com.apwdevs.apps.football.utility.ParameterClass
+import com.apwdevs.apps.football.utility.ResultConnection
 import com.google.gson.Gson
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -27,63 +28,61 @@ class SplashPresenter(
     fun getLeagueList() {
         view.onLoadingStarted()
         GlobalScope.launch(contextPool.main) {
-            var msg: String? = null
+            var msg: String?
             var finalData: List<TeamLeagueData>? = null
-            if (!fileDir.exists()) {
-                val isConnect = if (isTesting) true else CekKoneksi.isConnected(ctx).await()
-                if (isConnect) {
-                    val data = gson.fromJson(
-                        apiRepository.doRequest(GetLeagueSoccer.getAllLeague()).await(),
-                        LeagueResponse::class.java
-                    )
-                    if (data != null) {
-                        val listTeamLeagueData = mutableListOf<TeamLeagueData>()
-                        for (value in data.leagues) {
-                            if (!value.sportType.equals(ParameterClass.LEAGUE_FILTER)) continue
-                            listTeamLeagueData.add(value)
-                        }
-                        val fos = FileOutputStream(fileDir)
-                        val oos = ObjectOutputStream(fos)
-                        oos.writeObject(listTeamLeagueData.toList())
-                        oos.flush()
-                        fos.flush()
-                        oos.close()
-                        fos.close()
-                        finalData = listTeamLeagueData.toList()
-                    } else {
-                        msg = "Cannot get the data from internet!, please make sure you connected the internet!"
+            val preventUpdate = AvailableDataUpdates.isAvailable(mutableListOf(fileDir), isTesting, 0).await()
+            var isSuccess = false
+            if (preventUpdate.preventToUpdate) {
+                val data = gson.fromJson(
+                    apiRepository.doRequest(GetLeagueSoccer.getAllLeague()).await(),
+                    LeagueResponse::class.java
+                )
+                if (data != null) {
+                    val listTeamLeagueData = mutableListOf<TeamLeagueData>()
+                    for (value in data.leagues) {
+                        if (!value.sportType.equals(ParameterClass.LEAGUE_FILTER)) continue
+                        listTeamLeagueData.add(value)
                     }
+                    val fos = FileOutputStream(fileDir)
+                    val oos = ObjectOutputStream(fos)
+                    oos.writeObject(listTeamLeagueData.toList())
+                    oos.flush()
+                    fos.flush()
+                    oos.close()
+                    fos.close()
+                    finalData = listTeamLeagueData.toList()
+                    msg = preventUpdate.msg
+                    isSuccess = true
                 } else {
                     msg =
-                            "Please activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
+                            "Cannot load.\nPlease activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
                 }
             } else {
-                //if (if (isTesting) true else CekKoneksi.isConnected(ctx).await()) {
+                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     try {
                         val fis = FileInputStream(fileDir)
                         val ois = ObjectInputStream(fis)
                         finalData = ois.readObject() as List<TeamLeagueData>
                         ois.close()
                         fis.close()
+                        msg = preventUpdate.msg
+                        isSuccess = true
                     } catch (e: IOException) {
                         fileDir.delete()
                         msg =
                                 "$e. Please make sure you restart the application. If this problem is occur again, try reinstalling the app\n\nERR_IO_EXCEPTION\n:("
                     }
-                //} else msg =
-                //"Please activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
-
-
+                } else msg = preventUpdate.msg
                 if (isTesting)
                     Thread.sleep(1500)
                 else
                     delay(1500)
             }
 
-            if (finalData != null)
-                view.onLoadingSuccesfully(finalData)
+            if (isSuccess)
+                view.onLoadingSuccesfully(finalData!!)
             else
-                view.onLoadFailed(msg ?: "Null Message")
+                view.onLoadFailed(msg!!)
         }
 
     }

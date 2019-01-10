@@ -5,8 +5,9 @@ import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataCon
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.apiRepository.GetLastMatch
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.ui.FragmentLastMatchModel
 import com.apwdevs.apps.football.api.ApiRepository
-import com.apwdevs.apps.football.utility.CekKoneksi
+import com.apwdevs.apps.football.utility.AvailableDataUpdates
 import com.apwdevs.apps.football.utility.CoroutineContextProvider
+import com.apwdevs.apps.football.utility.ResultConnection
 import com.google.gson.Gson
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -25,64 +26,58 @@ class FragmentLastMatchPresenter(
 ) {
     var msg: String? = null
     var data: MatchLeagueResponse? = null
+    var countUserRefresh = 0
 
     fun getMatch(leagueId: String) {
 
         view.onShowLoading()
         GlobalScope.launch(contextPool.main) {
-            if (enableCaching) {
+            val cacheData = File(ctx.cacheDir, "last_match$leagueId")
+            val preventUpdate =
+                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++).await()
+            var isSuccess = false
+            if (preventUpdate.preventToUpdate) {
+                if (!getMatchFromServer(leagueId).await()) {
+                    // save into file --> cacheData
+                    val fstream = FileOutputStream(cacheData)
+                    val ostream = ObjectOutputStream(fstream)
+                    ostream.writeObject(data!!)
+                    ostream.flush()
+                    fstream.flush()
+                    ostream.close()
+                    fstream.close()
+                    isSuccess = true
+                    msg = preventUpdate.msg
+                } else
+                    msg = "Yahhh... Error saat ngambil data dari server... maaf yaa"
 
-                val cacheData = File(ctx.cacheDir, "last_match$leagueId")
-                if (cacheData.exists()) {
 
+            } else {
+                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     val fstream = FileInputStream(cacheData)
                     val istream = ObjectInputStream(fstream)
                     data = istream.readObject() as MatchLeagueResponse?
                     istream.close()
                     fstream.close()
-
-                    if (data == null)
-                        msg = "Cannot get data from the disk!"
-                } else {
-                    if (!getMatchFromServer(leagueId).await()) {
-                        // save into file --> cacheData
-                        val fstream = FileOutputStream(cacheData)
-                        val ostream = ObjectOutputStream(fstream)
-                        ostream.writeObject(data!!)
-                        ostream.flush()
-                        fstream.flush()
-                        ostream.close()
-                        fstream.close()
-                    }
+                    isSuccess = true
                 }
-
-            } else
-                getMatchFromServer(leagueId).await()
+                msg = preventUpdate.msg
+            }
 
             view.onHideLoading()
-            if (msg == null && data != null)
-                view.onDataSucceeded(data!!)
+            if (isSuccess)
+                view.onDataSucceeded(data!!, msg!!)
             else
                 view.onRequestFailed(msg!!)
         }
     }
 
     private fun getMatchFromServer(leagueId: String): Deferred<Boolean> = GlobalScope.async {
-        if (
-            if (isTesting) true
-            else CekKoneksi.isConnected(ctx).await()
-        ) {
             data = gson.fromJson(
                 apiRepository.doRequest(GetLastMatch.getMatch(leagueId)).await(),
                 MatchLeagueResponse::class.java
             )
-            if (data == null)
-                msg = "Failed to get data from server"
-        } else {
-            msg = "Your phone isn't connected into the internet. Make sure you check the connection"
-        }
-
-        msg != null
+        data == null
     }
 }

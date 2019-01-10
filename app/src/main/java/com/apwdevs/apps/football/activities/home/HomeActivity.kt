@@ -21,7 +21,6 @@ import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallbac
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.utility.ParameterClass
 import kotlinx.android.synthetic.main.activity_home.*
-import org.jetbrains.anko.toast
 
 class HomeActivity : AppCompatActivity() {
 
@@ -73,6 +72,7 @@ class HomeActivity : AppCompatActivity() {
             }
 
             override fun onPageSelected(p0: Int) {
+                home_appbar.setExpanded(true, true)
                 bottom_navigation.selectedItemId = when (p0) {
                     0 -> R.id.menu_match
                     1 -> R.id.menu_teams
@@ -84,6 +84,7 @@ class HomeActivity : AppCompatActivity() {
         //container.offscreenPageLimit = 3
         container.setCurrentItem(0, true)
         supportActionBar?.elevation = 0f
+        supportActionBar?.title = "Football"
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -154,13 +155,6 @@ class HomeActivity : AppCompatActivity() {
                 getListener().onDetachedFromWindow()
             }
 
-        }
-        searchView?.setOnSearchClickListener {
-            toast("onClickListenerSearch()")
-        }
-        searchView?.setOnCloseListener {
-            toast("onCloseListener()").show()
-            false
         }
         searchView?.setSearchableInfo(searchManager.getSearchableInfo(componentName))
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {

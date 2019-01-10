@@ -6,5 +6,5 @@ interface FragmentTeamsModel {
     fun showLoading()
     fun hideLoading()
     fun onNotLoaded(msg: String)
-    fun onFullyLoaded(teams: List<TeamData>)
+    fun onFullyLoaded(teams: List<TeamData>, msg: String)
 }

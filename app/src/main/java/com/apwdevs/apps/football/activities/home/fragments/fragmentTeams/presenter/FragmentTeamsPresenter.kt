@@ -5,8 +5,9 @@ import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.apiRepo
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.dataController.TeamDataResponse
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.ui.FragmentTeamsModel
 import com.apwdevs.apps.football.api.ApiRepository
-import com.apwdevs.apps.football.utility.CekKoneksi
+import com.apwdevs.apps.football.utility.AvailableDataUpdates
 import com.apwdevs.apps.football.utility.CoroutineContextProvider
+import com.apwdevs.apps.football.utility.ResultConnection
 import com.google.gson.Gson
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -27,6 +28,7 @@ class FragmentTeamsPresenter(
 
     private var msg: String? = null
     private var data: TeamDataResponse? = null
+    var countUserRefresh = 0
     private fun buildToURI(name: String): String {
         val sbuf = StringBuffer()
         for (i in name) {
@@ -41,45 +43,46 @@ class FragmentTeamsPresenter(
 
     fun getAllTeamsList(leagueName: String) {
         view.showLoading()
+        val leagueInURI: String = buildToURI(leagueName)
+        val cacheData = File(ctx.cacheDir, "team_list_league$leagueInURI")
         GlobalScope.launch(contextProvider.main) {
-            val leagueInURI: String = buildToURI(leagueName)
-            if (enableCaching) {
-                val cacheData = File(ctx.cacheDir, "team_list_league$leagueInURI")
-                if (cacheData.exists()) {
+            val preventUpdate =
+                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++).await()
+            var isSuccess = false
+            if (preventUpdate.preventToUpdate) {
 
+                if (!getAllTeamsListFromServer(leagueInURI).await()) {
+                    // save into file --> cacheData
+                    val fstream = FileOutputStream(cacheData)
+                    val ostream = ObjectOutputStream(fstream)
+                    ostream.writeObject(data!!)
+                    ostream.flush()
+                    fstream.flush()
+                    ostream.close()
+                    fstream.close()
+                    isSuccess = true
+                    msg = preventUpdate.msg
+                } else
+                    msg = "Yahhh... maaf gak bisa ngambil data :("
+
+            } else {
+                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     val fstream = FileInputStream(cacheData)
                     val istream = ObjectInputStream(fstream)
                     data = istream.readObject() as TeamDataResponse?
                     istream.close()
                     fstream.close()
-
-                    if (data == null)
-                        msg = "Cannot get data from disks!"
-
-                } else {
-                    if (!getAllTeamsListFromServer(leagueInURI).await()) {
-                        // save into file --> cacheData
-                        val fstream = FileOutputStream(cacheData)
-                        val ostream = ObjectOutputStream(fstream)
-                        ostream.writeObject(data!!)
-                        ostream.flush()
-                        fstream.flush()
-                        ostream.close()
-                        fstream.close()
-                    }
+                    isSuccess = true
                 }
+                msg = preventUpdate.msg
+            }
 
 
-            } else
-                getAllTeamsListFromServer(leagueInURI).await()
-
-
-            if (msg == null && data != null) {
-                view.hideLoading()
-                view.onFullyLoaded(data?.teams!!)
+            view.hideLoading()
+            if (isSuccess) {
+                view.onFullyLoaded(data?.teams!!, msg!!)
             } else {
-                view.hideLoading()
                 view.onNotLoaded(msg!!)
             }
 
@@ -87,19 +90,10 @@ class FragmentTeamsPresenter(
     }
 
     private fun getAllTeamsListFromServer(leagueInURI: String): Deferred<Boolean> = GlobalScope.async {
-        if (
-            if (isTesting) true
-            else CekKoneksi.isConnected(ctx).await()
-        ) {
             data = gson.fromJson(
                 apiRepository.doRequest(GetTeamList.getAllTeamInLeague(leagueInURI)).await(),
                 TeamDataResponse::class.java
             )
-            if (data == null)
-                msg = "Failed to get data from server"
-        } else {
-            msg = "Your phone isn't connected into the internet. Make sure you check the connection"
-        }
-        msg != null
+        data == null
     }
 }

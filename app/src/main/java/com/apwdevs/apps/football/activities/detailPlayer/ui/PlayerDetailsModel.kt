@@ -7,5 +7,9 @@ interface PlayerDetailsModel {
     fun showLoading()
     fun hideLoading()
     fun onDataNotLoaded(msgWhat: String)
-    fun onDataLoadFinished(playerData: PlayersDetailData, recyclerData: MutableList<DetailRecyclerData>)
+    fun onDataLoadFinished(
+        playerData: PlayersDetailData,
+        recyclerData: MutableList<DetailRecyclerData>,
+        msgWhat: String
+    )
 }

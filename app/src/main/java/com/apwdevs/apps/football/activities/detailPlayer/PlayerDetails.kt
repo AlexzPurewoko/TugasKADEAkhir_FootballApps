@@ -30,6 +30,8 @@ import com.squareup.picasso.Target
 import kotlinx.android.synthetic.main.activity_player_details.*
 import kotlinx.android.synthetic.main.content_player_details.*
 import org.jetbrains.anko.alert
+import org.jetbrains.anko.design.snackbar
+import org.jetbrains.anko.support.v4.onRefresh
 
 class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
 
@@ -127,6 +129,9 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
 
         presenter = PlayerDetailsPresenter(this, apiRepository, this, gson)
         presenter.getPlayerDetails(playerId)
+        player_details_swipeRefresh.onRefresh {
+            presenter.getPlayerDetails(playerId)
+        }
     }
 
     private fun initializeMemberLayout() {
@@ -148,6 +153,7 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
     }
 
     override fun onDataNotLoaded(msgWhat: String) {
+        player_details_swipeRefresh.isRefreshing = false
         alert(msgWhat, "Error :(") {
             iconResource = R.drawable.ic_report_problem
             negativeButton("Quit") {
@@ -159,13 +165,17 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         }.show()
     }
 
-    override fun onDataLoadFinished(playerData: PlayersDetailData, recyclerData: MutableList<DetailRecyclerData>) {
+    override fun onDataLoadFinished(
+        playerData: PlayersDetailData,
+        recyclerData: MutableList<DetailRecyclerData>,
+        msgWhat: String
+    ) {
         Picasso.get().load(playerData.strFanart1).into(targetB1)
         Picasso.get().load(playerData.strFanart2).into(targetB2)
         Picasso.get().load(playerData.strFanart3).into(targetB3)
         Picasso.get().load(playerData.strFanart4).into(targetB4)
-        playerWeight.text = playerData.playerWeight
-        playerHeight.text = playerData.playerHeight
+        playerWeight.text = if (playerData.playerWeight.isNullOrEmpty()) "no data" else playerData.playerWeight
+        playerHeight.text = if (playerData.playerHeight.isNullOrEmpty()) "no data" else playerData.playerHeight
         playerPosition.text = playerData.playerPosition
         playerDescription.text = playerData.playerDescription
 
@@ -173,6 +183,7 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         moreDetailsRecycler.layoutManager = LinearLayoutManager(this)
         moreDetailsRecycler.adapter = recyclerAdapter
         supportActionBar?.title = playerData.playerName
+        player_details_swipeRefresh.snackbar(msgWhat)
     }
 
     override fun onBackPressed() {

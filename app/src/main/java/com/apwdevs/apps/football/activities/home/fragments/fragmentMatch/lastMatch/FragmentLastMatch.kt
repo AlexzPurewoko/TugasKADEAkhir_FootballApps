@@ -114,14 +114,16 @@ class FragmentLastMatch : Fragment(), FragmentLastMatchModel, FragmentHomeCallba
     }
 
     override fun onRequestFailed(msg: String) {
-        swipeRefresh.snackbar("Error : $msg").show()
+        swipeRefresh.isRefreshing = false
+        swipeRefresh.snackbar(msg).show()
     }
 
-    override fun onDataSucceeded(leagues: MatchLeagueResponse) {
+    override fun onDataSucceeded(leagues: MatchLeagueResponse, msg: String) {
         swipeRefresh.isRefreshing = false
         allMatchInLeague.clear()
         allMatchInLeague.addAll(leagues.events)
         recyclerAdapter.notifyDataSetChanged()
+        swipeRefresh.snackbar(msg)
     }
 
     override fun transactionData(what: String) {

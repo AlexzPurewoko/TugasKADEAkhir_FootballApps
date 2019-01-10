@@ -6,5 +6,5 @@ interface FragmentLastMatchModel {
     fun onShowLoading()
     fun onHideLoading()
     fun onRequestFailed(msg: String)
-    fun onDataSucceeded(leagues: MatchLeagueResponse)
+    fun onDataSucceeded(leagues: MatchLeagueResponse, msg: String)
 }

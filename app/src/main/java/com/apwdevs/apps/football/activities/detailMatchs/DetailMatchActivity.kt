@@ -19,7 +19,6 @@ import com.apwdevs.apps.football.activities.detailMatchs.presenter.DetailMatchPr
 import com.apwdevs.apps.football.activities.detailMatchs.ui.DetailMatchModel
 import com.apwdevs.apps.football.activities.detailMatchs.ui.adapter.DetailCardViewHolder
 import com.apwdevs.apps.football.activities.detailMatchs.ui.adapter.DetailMatchRecyclerAdapter
-import com.apwdevs.apps.football.activities.home.HomeActivity
 import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.database.MatchFavoriteData
@@ -32,13 +31,11 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_detail_match.*
 import kotlinx.android.synthetic.main.content_detail_match.*
 import org.jetbrains.anko.alert
-import org.jetbrains.anko.clearTask
 import org.jetbrains.anko.db.classParser
 import org.jetbrains.anko.db.delete
 import org.jetbrains.anko.db.insert
 import org.jetbrains.anko.db.select
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.intentFor
 import org.jetbrains.anko.support.v4.onRefresh
 
 class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
@@ -93,6 +90,23 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         val presenter = DetailMatchPresenter(this, apiRepository, this, gson)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = nameLeague
+        activity_detail_match_appbar.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
+            val maxAlpha = 1.0f
+            val maxScroll = appBarLayout.totalScrollRange
+            val percentage = Math.abs(verticalOffset).toFloat() / maxScroll.toFloat()
+            val retAlpha = maxAlpha - percentage
+            homeLogo.alpha = retAlpha
+            awayLogo.alpha = retAlpha
+            scoreHome.alpha = retAlpha
+            scoreAway.alpha = retAlpha
+            nameHome.alpha = retAlpha
+
+            nameAway.alpha = retAlpha
+            awayLogo.alpha = retAlpha
+            dateText.alpha = retAlpha
+            timeText.alpha = retAlpha
+            content_match_detail_id_vs.alpha = retAlpha
+        }
         presenter.getData(idMatch)
         activity_detail_match_swiperefresh.onRefresh {
             presenter.getData(idMatch)
@@ -134,7 +148,8 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
     override fun onSuccessLoadingData(
         matchData: DetailMatchDataClass,
         teamProps: List<TeamPropData>,
-        dataRecycler: MutableList<DataPropertyRecycler>
+        dataRecycler: MutableList<DataPropertyRecycler>,
+        msg: String
     ) {
         activity_detail_match_swiperefresh.isRefreshing = false
         this.matchDetails = matchData
@@ -152,8 +167,9 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         Picasso.get().load(teamProps[1].strTeamBadge).resize(100, 100).into(awayLogo)
 
         val currentCalendar = MyDate.getCalendarInGMT7(matchDetails.timeEvent, matchDetails.dateEvent, "yyyy-MM-dd")
-        dateText.text = MyDate.getDateFromCalendar(currentCalendar)//getDate(matchDetails.dateEvent, "yyyy-MM-dd")
-        timeText.text = MyDate.getTimeFromCalendar(currentCalendar)//MyDate.getTimeInGMT7(matchDetails.timeEvent)
+        dateText.text = MyDate.getDateFromCalendar(currentCalendar)
+        timeText.text = MyDate.getTimeFromCalendar(currentCalendar)
+        recyclerView.snackbar(msg).show()
     }
 
     override fun onFailedLoadingData(what: String) {
@@ -243,7 +259,7 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
             }
             recyclerView.snackbar(ParameterClass.STRING_REMOVE_FROM_DATABASE).show()
         } catch (e: SQLiteConstraintException) {
-            recyclerView.snackbar(e.localizedMessage).show()
+            recyclerView.snackbar(e.localizedMessage).setDuration(3500).show()
         }
     }
 
@@ -251,11 +267,11 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
 
     override fun onBackPressed() {
         finish()
-        startActivity(
+        /*startActivity(
             intentFor<HomeActivity>(
                 ParameterClass.LIST_LEAGUE_DATA to items.leagues
             ).clearTask()
-        )
+        )*/
     }
 
     override fun onSupportNavigateUp(): Boolean {

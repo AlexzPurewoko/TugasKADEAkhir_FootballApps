@@ -13,3 +13,18 @@ fun View.gone() {
 fun View.invisible() {
     visibility = View.INVISIBLE
 }
+
+fun View.isVisible(): Boolean {
+    return when (visibility) {
+        View.VISIBLE -> true
+        else -> false
+    }
+}
+
+fun View.isGone(): Boolean {
+    return when (visibility) {
+        View.GONE -> true
+        else -> false
+    }
+
+}
