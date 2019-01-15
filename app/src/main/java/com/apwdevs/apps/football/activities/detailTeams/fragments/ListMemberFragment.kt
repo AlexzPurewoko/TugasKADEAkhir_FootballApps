@@ -23,6 +23,7 @@ import org.jetbrains.anko.support.v4.toast
 class ListMemberFragment : Fragment(), AnkoComponent<Context> {
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerAdapter: ListMemberRA
+    private var isTesting: Boolean = false
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -35,13 +36,15 @@ class ListMemberFragment : Fragment(), AnkoComponent<Context> {
             arguments?.getSerializable(ParameterClass.KEY_ARGUMENT_LIST_MEMBER_PLAYER) as TeamMemberShortDataResponse
         val leagues = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
         val teamId = arguments?.getString(ParameterClass.ID_SELECTED_TEAMS)
-        recyclerAdapter = ListMemberRA(players.player) {
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
+        recyclerAdapter = ListMemberRA(players.player, isTesting) {
             toast("selected name ${it.playerName} id : ${it.playerId}").show()
             startActivity(
                 intentFor<PlayerDetails>(
                     ParameterClass.ID_SELECTED_PLAYERS to it.playerId,
                     ParameterClass.LIST_LEAGUE_DATA to leagues.leagues,
-                    ParameterClass.ID_SELECTED_TEAMS to teamId
+                    ParameterClass.ID_SELECTED_TEAMS to teamId,
+                    ParameterClass.KEY_IS_APP_TESTING to isTesting
                 ).clearTask()
             )
         }
@@ -63,13 +66,15 @@ class ListMemberFragment : Fragment(), AnkoComponent<Context> {
         fun newInstance(
             players: List<TeamMemberShortData>,
             leagues: MutableList<TeamLeagueData>,
-            teamId: String
+            teamId: String,
+            isTesting: Boolean
         ): ListMemberFragment {
             val fragment = ListMemberFragment()
             val extras = Bundle()
             extras.putSerializable(ParameterClass.KEY_ARGUMENT_LIST_MEMBER_PLAYER, TeamMemberShortDataResponse(players))
             extras.putSerializable(ParameterClass.LIST_LEAGUE_DATA, LeagueResponse(leagues))
             extras.putString(ParameterClass.ID_SELECTED_TEAMS, teamId)
+            extras.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = extras
             return fragment
         }

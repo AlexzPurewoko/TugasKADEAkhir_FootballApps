@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import java.io.*
 
 class SplashPresenter(
-    private val ctx: Context,
+    ctx: Context,
     private val view: SplashModel,
     private val apiRepository: ApiRepository,
     private val gson: Gson,
@@ -30,7 +30,8 @@ class SplashPresenter(
         GlobalScope.launch(contextPool.main) {
             var msg: String?
             var finalData: List<TeamLeagueData>? = null
-            val preventUpdate = AvailableDataUpdates.isAvailable(mutableListOf(fileDir), isTesting, 0).await()
+            val preventUpdate =
+                AvailableDataUpdates.isAvailable(mutableListOf(fileDir), isTesting, 0, contextPool).await()
             var isSuccess = false
             if (preventUpdate.preventToUpdate) {
                 val data = gson.fromJson(
@@ -58,7 +59,11 @@ class SplashPresenter(
                             "Cannot load.\nPlease activate your internet connection first before launching this app, Okay? \n\nERR_INET_MISSING\n:("
                 }
             } else {
-                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    finalData = SplashPresenterImpl.getData().leagues
+                    msg = preventUpdate.msg
+                    isSuccess = true
+                } else if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     try {
                         val fis = FileInputStream(fileDir)
                         val ois = ObjectInputStream(fis)
@@ -73,6 +78,7 @@ class SplashPresenter(
                                 "$e. Please make sure you restart the application. If this problem is occur again, try reinstalling the app\n\nERR_IO_EXCEPTION\n:("
                     }
                 } else msg = preventUpdate.msg
+
                 if (isTesting)
                     Thread.sleep(1500)
                 else

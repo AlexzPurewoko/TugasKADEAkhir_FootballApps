@@ -18,6 +18,7 @@ import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.MatchFr
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.FragmentTeams
 import com.apwdevs.apps.football.activities.home.homeUtility.CustomSearchView
 import com.apwdevs.apps.football.activities.home.homeUtility.FragmentHomeCallback
+import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.utility.ParameterClass
 import kotlinx.android.synthetic.main.activity_home.*
@@ -25,14 +26,15 @@ import kotlinx.android.synthetic.main.activity_home.*
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var mSectionsPagerAdapter: SectionsPagerAdapter
-
+    private var isTesting: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
         setSupportActionBar(toolbar)
-        val receiver = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as List<TeamLeagueData>
+        isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)
+        val receiver = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
 
-        mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, receiver)
+        mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, receiver.leagues)
 
         val collapsing = collapse_toolbar
         collapsing.isTitleEnabled = false
@@ -47,11 +49,6 @@ class HomeActivity : AppCompatActivity() {
                 R.id.menu_teams -> {
                     container.setCurrentItem(1, true)
                     val fragment = mSectionsPagerAdapter.getItem(container.currentItem)
-                    if (container.currentItem == 1) {
-                        val k: FragmentTeams = fragment as FragmentTeams
-                        val i: FragmentHomeCallback = k
-                        i.transactionData("Hanya Coba - coba saja.... wkwkwkwk :)")
-                    }
                     true
                 }
                 else -> {
@@ -74,9 +71,18 @@ class HomeActivity : AppCompatActivity() {
             override fun onPageSelected(p0: Int) {
                 home_appbar.setExpanded(true, true)
                 bottom_navigation.selectedItemId = when (p0) {
-                    0 -> R.id.menu_match
-                    1 -> R.id.menu_teams
-                    else -> R.id.favorite
+                    0 -> {
+                        supportActionBar?.title = getString(R.string.home_actionbar_title_menumatch)
+                        R.id.menu_match
+                    }
+                    1 -> {
+                        supportActionBar?.title = getString(R.string.home_actionbar_title_menuteams)
+                        R.id.menu_teams
+                    }
+                    else -> {
+                        supportActionBar?.title = getString(R.string.home_actionbar_title_menufavorites)
+                        R.id.favorite
+                    }
                 }
             }
 
@@ -173,9 +179,9 @@ class HomeActivity : AppCompatActivity() {
     inner class SectionsPagerAdapter(fm: FragmentManager, leagues: List<TeamLeagueData>) :
         FragmentPagerAdapter(fm) {
         private val fragments: ArrayList<Fragment> = arrayListOf(
-            MatchFragments.newInstance(leagues),
-            FragmentTeams.newInstance(leagues),
-            FavoritesFragment.newInstance(leagues)
+            MatchFragments.newInstance(leagues, isTesting),
+            FragmentTeams.newInstance(leagues, isTesting),
+            FavoritesFragment.newInstance(leagues, isTesting)
         )
 
         override fun getItem(position: Int): Fragment = fragments[position]

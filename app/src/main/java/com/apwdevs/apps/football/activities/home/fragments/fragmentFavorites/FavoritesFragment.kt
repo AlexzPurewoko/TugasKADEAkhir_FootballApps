@@ -26,11 +26,13 @@ class FavoritesFragment : Fragment(), FragmentHomeCallback {
     private lateinit var fragmentAdapter: FragmentStateFavoriteAdapter
     private lateinit var tabLayout: TabLayout
     private lateinit var leagues: LeagueResponse
+    private var isTesting: Boolean = false
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         tabLayout = fragment_favorite_id_tabLayout
         leagues = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
         viewPagerHolder = fragment_favorite_id_viewpagerholder
         fragmentAdapter = FragmentStateFavoriteAdapter(fragmentManager!!)
         viewPagerHolder.adapter = fragmentAdapter
@@ -95,9 +97,8 @@ class FavoritesFragment : Fragment(), FragmentHomeCallback {
 
     inner class FragmentStateFavoriteAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
         private val fragments = arrayListOf<Fragment>(
-            MatchFavoriteFragment.newInstance(leagues = leagues),
-            TeamFavoriteFragment.newInstance(leagues = leagues)
-            //FragmentLastMatch.newInstance(leagues = leagues)
+            MatchFavoriteFragment.newInstance(leagues, isTesting),
+            TeamFavoriteFragment.newInstance(leagues, isTesting)
         )
 
         override fun getItem(p0: Int): Fragment = fragments[p0]
@@ -107,10 +108,11 @@ class FavoritesFragment : Fragment(), FragmentHomeCallback {
     }
 
     companion object {
-        fun newInstance(leagues: List<TeamLeagueData>): FavoritesFragment {
+        fun newInstance(leagues: List<TeamLeagueData>, isTesting: Boolean): FavoritesFragment {
             val fragment = FavoritesFragment()
             val args = Bundle()
             args.putSerializable(ParameterClass.LIST_LEAGUE_DATA, LeagueResponse(leagues))
+            args.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = args
             return fragment
         }

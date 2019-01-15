@@ -40,10 +40,12 @@ class MatchFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentMatc
     private lateinit var leagues: LeagueResponse
     private val listFavoriteMatch: MutableList<MatchLeagueData> = mutableListOf()
     private val matchFavoriteOrig: MutableList<MatchFavoriteData> = mutableListOf()
+    private var isTesting: Boolean = false
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         leagues = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
         recyclerAdapter = FragmentLastMatchRA(listFavoriteMatch, "yyyy-MM-dd") {
             val pos = listFavoriteMatch.indexOf(it)
             startActivity(
@@ -163,10 +165,11 @@ class MatchFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentMatc
 
 
     companion object {
-        fun newInstance(leagues: LeagueResponse): MatchFavoriteFragment {
+        fun newInstance(leagues: LeagueResponse, isTesting: Boolean): MatchFavoriteFragment {
             val fragment = MatchFavoriteFragment()
             val extras = Bundle()
             extras.putSerializable(ParameterClass.LIST_LEAGUE_DATA, leagues)
+            extras.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = extras
             return fragment
         }

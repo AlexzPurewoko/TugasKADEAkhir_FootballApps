@@ -40,12 +40,14 @@ class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamM
     private lateinit var leagues: LeagueResponse
     private val listFavoriteTeams: MutableList<TeamData> = mutableListOf()
     private val teamsFavoriteOrig: MutableList<TeamFavoriteData> = mutableListOf()
+    private var isTesting: Boolean = false
 
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         leagues = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
-        recyclerAdapter = RecyclerTeamsAdapter(listFavoriteTeams) {
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
+        recyclerAdapter = RecyclerTeamsAdapter(listFavoriteTeams, isTesting) {
             startActivity(
                 intentFor<AboutTeams>(
                     ParameterClass.ID_SELECTED_TEAMS to it.teamId,
@@ -162,10 +164,11 @@ class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamM
 
 
     companion object {
-        fun newInstance(leagues: LeagueResponse): TeamFavoriteFragment {
+        fun newInstance(leagues: LeagueResponse, isTesting: Boolean): TeamFavoriteFragment {
             val fragment = TeamFavoriteFragment()
             val extras = Bundle()
             extras.putSerializable(ParameterClass.LIST_LEAGUE_DATA, leagues)
+            extras.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = extras
             return fragment
         }

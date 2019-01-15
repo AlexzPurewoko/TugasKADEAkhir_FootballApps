@@ -25,6 +25,7 @@ class MatchFragments : Fragment(), FragmentHomeCallback {
     private lateinit var viewpagerContainer: ViewPager
     private lateinit var leagues: LeagueResponse
     private lateinit var adapter: FragmentStateMatchAdapter
+    private var isTesting: Boolean = false
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val layout = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_matchs, container, false)
         tabLayout = layout.findViewById(R.id.fragment_match_id_tabLayout)
@@ -35,6 +36,7 @@ class MatchFragments : Fragment(), FragmentHomeCallback {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         leagues = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
         adapter = FragmentStateMatchAdapter(fragmentManager!!)
         viewpagerContainer.adapter = adapter
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
@@ -98,8 +100,8 @@ class MatchFragments : Fragment(), FragmentHomeCallback {
 
     inner class FragmentStateMatchAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
         private val fragments = arrayListOf<Fragment>(
-            FragmentNextMatch.newInstance(leagues = leagues),
-            FragmentLastMatch.newInstance(leagues = leagues)
+            FragmentNextMatch.newInstance(leagues, isTesting),
+            FragmentLastMatch.newInstance(leagues, isTesting)
         )
 
         override fun getItem(p0: Int): Fragment = fragments[p0]
@@ -109,10 +111,11 @@ class MatchFragments : Fragment(), FragmentHomeCallback {
     }
 
     companion object {
-        fun newInstance(leagues: List<TeamLeagueData>): MatchFragments {
+        fun newInstance(leagues: List<TeamLeagueData>, isTesting: Boolean): MatchFragments {
             val fragment = MatchFragments()
             val args = Bundle()
             args.putSerializable(ParameterClass.LIST_LEAGUE_DATA, LeagueResponse(leagues))
+            args.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = args
             return fragment
         }

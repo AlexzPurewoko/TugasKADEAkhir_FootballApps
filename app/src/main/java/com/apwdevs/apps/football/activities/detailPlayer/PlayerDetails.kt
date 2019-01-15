@@ -22,6 +22,7 @@ import com.apwdevs.apps.football.activities.detailTeams.fragments.adapter.Detail
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.utility.DialogShowHelper
+import com.apwdevs.apps.football.utility.LoadImage
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.apwdevs.apps.football.utility.gone
 import com.google.gson.Gson
@@ -56,6 +57,7 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
 
     private val dialog: DialogShowHelper = DialogShowHelper(this)
     private lateinit var presenter: PlayerDetailsPresenter
+    private var isTesting: Boolean = false
     private val targetB1 = object : TargetHolder() {
         override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
             bitmapLoaded(bitmap)
@@ -126,8 +128,9 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         leagues = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as List<TeamLeagueData>
         teamId = intent.getStringExtra(ParameterClass.ID_SELECTED_TEAMS)
         playerId = intent.getStringExtra(ParameterClass.ID_SELECTED_PLAYERS)
+        isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)
 
-        presenter = PlayerDetailsPresenter(this, apiRepository, this, gson)
+        presenter = PlayerDetailsPresenter(this, apiRepository, this, gson, isTesting)
         presenter.getPlayerDetails(playerId)
         player_details_swipeRefresh.onRefresh {
             presenter.getPlayerDetails(playerId)
@@ -159,8 +162,6 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
             negativeButton("Quit") {
                 it.dismiss()
                 this@PlayerDetails.finish()
-                //val pid = Process.myPid()
-                //Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(pid) }, 1200)
             }
         }.show()
     }
@@ -170,7 +171,7 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         recyclerData: MutableList<DetailRecyclerData>,
         msgWhat: String
     ) {
-        Picasso.get().load(playerData.strFanart1).into(targetB1)
+        LoadImage.load(this, playerData.strFanart1, isTesting)?.into(targetB1)
         Picasso.get().load(playerData.strFanart2).into(targetB2)
         Picasso.get().load(playerData.strFanart3).into(targetB3)
         Picasso.get().load(playerData.strFanart4).into(targetB4)
@@ -187,12 +188,6 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
     }
 
     override fun onBackPressed() {
-        /*startActivity(
-            intentFor<AboutTeams>(
-                ParameterClass.ID_SELECTED_TEAMS to teamId,
-                ParameterClass.LIST_LEAGUE_DATA to leagues
-            ).clearTop().clearTask()
-        )*/
         finish()
     }
 

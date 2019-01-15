@@ -6,24 +6,27 @@ import android.support.v7.app.AppCompatActivity
 import android.view.WindowManager
 import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.home.HomeActivity
+import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.activities.splash.presenter.SplashPresenter
 import com.apwdevs.apps.football.activities.splash.ui.SplashModel
 import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.google.gson.Gson
-import org.jetbrains.anko.alert
-import org.jetbrains.anko.clearTask
-import org.jetbrains.anko.clearTop
-import org.jetbrains.anko.intentFor
+import org.jetbrains.anko.*
 
 class SplashScreenActivity : AppCompatActivity(), SplashModel {
+
+    private var isTesting: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
+        isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)
+        longToast("value isTesting = $isTesting")
         val gson = Gson()
         val apiRepo = ApiRepository()
-        val adapter = SplashPresenter(this, this, apiRepo, gson)
+        val adapter = SplashPresenter(this, this, apiRepo, gson, isTesting = isTesting)
         adapter.getLeagueList()
         setTransparentColorBar()
     }
@@ -55,7 +58,13 @@ class SplashScreenActivity : AppCompatActivity(), SplashModel {
     }
 
     override fun onLoadingSuccesfully(leagues: List<TeamLeagueData>) {
-        startActivity(intentFor<HomeActivity>(ParameterClass.LIST_LEAGUE_DATA to leagues).clearTop().clearTask())
+        startActivity(
+            intentFor<HomeActivity>(
+                ParameterClass.LIST_LEAGUE_DATA to LeagueResponse(leagues),
+                ParameterClass.KEY_IS_APP_TESTING to isTesting
+
+            ).clearTop().clearTask()
+        )
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 }

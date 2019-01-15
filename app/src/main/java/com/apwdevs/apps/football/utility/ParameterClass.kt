@@ -15,4 +15,5 @@ object ParameterClass {
     const val DB_NAME: String = "database_favorite.db"
     const val STRING_ADD_INTO_DATABASE: String = "Added into Favorite! :)"
     const val STRING_REMOVE_FROM_DATABASE: String = "Yahhhh.....\nKok dihapus sihhhh... :'("
+    const val KEY_IS_APP_TESTING: String = "APP_TESTING_KEY"
 }

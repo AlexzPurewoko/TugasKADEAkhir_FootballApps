@@ -2,6 +2,7 @@ package com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMa
 
 import android.content.Context
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataController.MatchLeagueResponse
+import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.impl.FragmentMatchPresenterImpl
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.apiRepository.GetLastMatch
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.ui.FragmentLastMatchModel
 import com.apwdevs.apps.football.api.ApiRepository
@@ -20,7 +21,6 @@ class FragmentLastMatchPresenter(
     private var view: FragmentLastMatchModel,
     private val gson: Gson,
     private val apiRepository: ApiRepository,
-    private val enableCaching: Boolean = true,
     private val isTesting: Boolean = false,
     private val contextPool: CoroutineContextProvider = CoroutineContextProvider()
 ) {
@@ -34,7 +34,8 @@ class FragmentLastMatchPresenter(
         GlobalScope.launch(contextPool.main) {
             val cacheData = File(ctx.cacheDir, "last_match$leagueId")
             val preventUpdate =
-                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++).await()
+                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++, contextPool)
+                    .await()
             var isSuccess = false
             if (preventUpdate.preventToUpdate) {
                 if (!getMatchFromServer(leagueId).await()) {
@@ -53,7 +54,11 @@ class FragmentLastMatchPresenter(
 
 
             } else {
-                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    data = FragmentMatchPresenterImpl.getDataLastMatch(leagueId)
+                    msg = preventUpdate.msg
+                    isSuccess = true
+                } else if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     val fstream = FileInputStream(cacheData)
                     val istream = ObjectInputStream(fstream)

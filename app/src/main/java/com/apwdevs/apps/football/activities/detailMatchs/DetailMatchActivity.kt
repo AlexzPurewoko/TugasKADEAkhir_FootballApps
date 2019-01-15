@@ -11,6 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.detailMatchs.dataController.DataPropertyRecycler
 import com.apwdevs.apps.football.activities.detailMatchs.dataController.DetailMatchDataClass
@@ -24,10 +25,10 @@ import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.database.MatchFavoriteData
 import com.apwdevs.apps.football.database.database
 import com.apwdevs.apps.football.utility.DialogShowHelper
+import com.apwdevs.apps.football.utility.LoadImage
 import com.apwdevs.apps.football.utility.MyDate
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.google.gson.Gson
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_detail_match.*
 import kotlinx.android.synthetic.main.content_detail_match.*
 import org.jetbrains.anko.alert
@@ -67,6 +68,7 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
     private lateinit var idLeague: String
     private lateinit var nameLeague: String
     private lateinit var items: LeagueResponse
+    private var isTesting: Boolean = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,6 +81,7 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         idLeague = intent.getStringExtra(ParameterClass.ID_SELECTED_LEAGUE_KEY)
         nameLeague = intent.getStringExtra(ParameterClass.NAME_LEAGUE_KEY)
         items = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)
         activity_detail_match_swiperefresh.setColorSchemeColors(
             getColors(R.color.colorAccent),
             getColors(android.R.color.holo_green_light),
@@ -87,7 +90,7 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         )
         val apiRepository = ApiRepository()
         val gson = Gson()
-        val presenter = DetailMatchPresenter(this, apiRepository, this, gson)
+        val presenter = DetailMatchPresenter(this, apiRepository, this, gson, isTesting)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = nameLeague
         activity_detail_match_appbar.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
@@ -110,6 +113,7 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         presenter.getData(idMatch)
         activity_detail_match_swiperefresh.onRefresh {
             presenter.getData(idMatch)
+            Toast.makeText(baseContext, "idmatch = $idMatch", Toast.LENGTH_LONG).show()
         }
 
     }
@@ -163,8 +167,8 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
         nameAway.text = teamProps[1].strTeam
         scoreHome.text = matchDetails.intHomeScore ?: "-"
         scoreAway.text = matchDetails.intAwayScore ?: "-"
-        Picasso.get().load(teamProps[0].strTeamBadge).resize(100, 100).into(homeLogo)
-        Picasso.get().load(teamProps[1].strTeamBadge).resize(100, 100).into(awayLogo)
+        LoadImage.load(this, teamProps[0].strTeamBadge, isTesting)?.resize(100, 100)?.into(homeLogo)
+        LoadImage.load(this, teamProps[1].strTeamBadge, isTesting)?.resize(100, 100)?.into(awayLogo)
 
         val currentCalendar = MyDate.getCalendarInGMT7(matchDetails.timeEvent, matchDetails.dateEvent, "yyyy-MM-dd")
         dateText.text = MyDate.getDateFromCalendar(currentCalendar)
@@ -267,11 +271,6 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
 
     override fun onBackPressed() {
         finish()
-        /*startActivity(
-            intentFor<HomeActivity>(
-                ParameterClass.LIST_LEAGUE_DATA to items.leagues
-            ).clearTask()
-        )*/
     }
 
     override fun onSupportNavigateUp(): Boolean {

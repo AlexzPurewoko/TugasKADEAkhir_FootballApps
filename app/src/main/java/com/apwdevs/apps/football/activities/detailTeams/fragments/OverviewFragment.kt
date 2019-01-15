@@ -12,6 +12,7 @@ import com.apwdevs.apps.football.utility.ParameterClass
 class OverviewFragment : Fragment() {
 
     private lateinit var textView: TextView
+    private var isTesting: Boolean = false
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val layout = inflater.inflate(R.layout.fragment_overview_about_teams, container, false)
         textView = layout.findViewById(R.id.fragment_team_overview_text)

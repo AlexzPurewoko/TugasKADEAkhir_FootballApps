@@ -35,7 +35,12 @@ class DetailMatchPresenter(
             val cacheTeams = File(ctx.cacheDir, "teams_event$eventId")
             val cacheData = File(ctx.cacheDir, "data_event$eventId")
             val preventUpdate =
-                AvailableDataUpdates.isAvailable(mutableListOf(cacheData, cacheTeams), isTesting, countUserRefresh++)
+                AvailableDataUpdates.isAvailable(
+                    mutableListOf(cacheData, cacheTeams),
+                    isTesting,
+                    countUserRefresh++,
+                    contextPool
+                )
                     .await()
             var isSuccess = false
             if (preventUpdate.preventToUpdate) {
@@ -63,8 +68,12 @@ class DetailMatchPresenter(
                     msg = "Yahhh... Error saat ngambil data dari server... maaf yaa"
                 }
             } else {
-
-                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    data = DetailMatchPresenterImpl.getData(eventId)
+                    recyclerData = getDataRecycler(data?.events!![0])
+                    dataTeam = DetailMatchPresenterImpl.getTeamDataInMatch(data!!)
+                    isSuccess = true
+                } else if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheTeams
                     var fstream = FileInputStream(cacheTeams)
                     var istream = ObjectInputStream(fstream)
@@ -96,7 +105,7 @@ class DetailMatchPresenter(
         }
     }
 
-    fun getDataFromServer(eventId: String): Deferred<Boolean> = GlobalScope.async {
+    fun getDataFromServer(eventId: String): Deferred<Boolean> = GlobalScope.async(contextPool.main) {
         data = gson.fromJson(
                 apiRepository.doRequest(GetMatchDetailDataFromApi.getDetailMatchURL(eventId)).await(),
                 DetailMatchResponse::class.java
@@ -117,11 +126,11 @@ class DetailMatchPresenter(
                 dataTeam?.add(dataTeamHome.teams[0])
                 dataTeam?.add(dataTeamAway.teams[0])
                 recyclerData = getDataRecycler(data?.events!![0])
-            }
+        }
         data == null
     }
 
-    private fun getDataRecycler(data: DetailMatchDataClass): MutableList<DataPropertyRecycler> {
+    fun getDataRecycler(data: DetailMatchDataClass): MutableList<DataPropertyRecycler> {
         val ret: MutableList<DataPropertyRecycler> = mutableListOf()
         ret.clear()
         ret.add(DataPropertyRecycler(true, "Statistics", null, null))

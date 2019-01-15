@@ -20,22 +20,26 @@ class PlayerDetailsPresenter(
     private val apiRepository: ApiRepository,
     private val model: PlayerDetailsModel,
     private val gson: Gson,
-    private val enableCaching: Boolean = true,
     private val isTesting: Boolean = false,
     private val contextPool: CoroutineContextProvider = CoroutineContextProvider()
 ) {
 
     private var playerDetails: PlayerDetailsDataResponse? = null
     private var msg: String? = null
-    private val recyclerData: MutableList<DetailRecyclerData> = mutableListOf()
-    var countUserRefresh = 0
+    private val recyclerDataInternal: MutableList<DetailRecyclerData> = mutableListOf()
+    private var countUserRefresh = 0
 
     fun getPlayerDetails(playerId: String) {
         model.showLoading()
         GlobalScope.launch(contextPool.main) {
             val cachePlayers = File(ctx.cacheDir, "detail_player$playerId")
             val preventUpdate =
-                AvailableDataUpdates.isAvailable(mutableListOf(cachePlayers), isTesting, countUserRefresh++).await()
+                AvailableDataUpdates.isAvailable(
+                    mutableListOf(cachePlayers),
+                    isTesting,
+                    countUserRefresh++,
+                    contextPool
+                ).await()
             var isSuccess = false
             if (preventUpdate.preventToUpdate) {
 
@@ -54,14 +58,18 @@ class PlayerDetailsPresenter(
                         msg = "Yahhh... Error saat ngambil data dari server... maaf yaa"
                     }
             } else {
-                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    playerDetails = PlayerTeamsPresenterImpl.getDetails(playerId)
+                    getRecyclerData(recyclerDataInternal, playerDetails?.players!![0])
+                    isSuccess = true
+                } else if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     val fstream = FileInputStream(cachePlayers)
                     val istream = ObjectInputStream(fstream)
                     playerDetails = PlayerDetailsDataResponse(istream.readObject() as List<PlayersDetailData>)
                     istream.close()
                     fstream.close()
-                    getRecyclerData()
+                    getRecyclerData(recyclerDataInternal, playerDetails?.players!![0])
                     isSuccess = true
                 }
                 msg = preventUpdate.msg
@@ -74,7 +82,7 @@ class PlayerDetailsPresenter(
             if (!isSuccess)
                 model.onDataNotLoaded(msg!!)
             else {
-                model.onDataLoadFinished(playerDetails?.players!![0], recyclerData, msg!!)
+                model.onDataLoadFinished(playerDetails?.players!![0], recyclerDataInternal, msg!!)
             }
         }
     }
@@ -82,7 +90,7 @@ class PlayerDetailsPresenter(
     fun getPlayerDetailsFromInternet(playerId: String): Deferred<Boolean> = GlobalScope.async {
             if (getDetails(playerId).await()) {
                 // success then load the recycler data
-                getRecyclerData()
+                getRecyclerData(recyclerDataInternal, playerDetails?.players!![0])
                 false
             } else {
                 msg = "Cannot establish player data from server\nSorry :("
@@ -98,8 +106,7 @@ class PlayerDetailsPresenter(
         playerDetails != null
     }
 
-    fun getRecyclerData() {
-        val players = playerDetails?.players!![0]
+    fun getRecyclerData(recyclerData: MutableList<DetailRecyclerData>, players: PlayersDetailData) {
         recyclerData.clear()
         recyclerData.add(DetailRecyclerData("More", null, PropertyRecyclerType.PROPERTY_INDEPENDENT))
         recyclerData.add(

@@ -8,6 +8,7 @@ import com.apwdevs.apps.football.activities.detailTeams.dataController.TeamMembe
 
 class ListMemberRA(
     private val players: List<TeamMemberShortData>,
+    private val isTesting: Boolean,
     private val listener: (TeamMemberShortData) -> Unit
 ) : RecyclerView.Adapter<ListMemberVH>() {
 
@@ -29,7 +30,7 @@ class ListMemberRA(
     override fun getItemCount(): Int = players.size
 
     override fun onBindViewHolder(holder: ListMemberVH, position: Int) {
-        holder.bindItem(players[position])
+        holder.bindItem(players[position], isTesting)
     }
 
 }

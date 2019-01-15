@@ -47,6 +47,7 @@ class FragmentTeams : Fragment(), FragmentTeamsModel, FragmentHomeCallback {
     private lateinit var leagues: MutableList<TeamLeagueData>
     private lateinit var allLeagueNames: MutableList<String>
     private lateinit var presenter: FragmentTeamsPresenter
+    private var isTesting: Boolean = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val layout = FragmentUI().createView(AnkoContext.create(requireContext()))
@@ -60,16 +61,18 @@ class FragmentTeams : Fragment(), FragmentTeamsModel, FragmentHomeCallback {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         val item = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
 
         leagues = item.leagues as MutableList<TeamLeagueData>
         getNameLeagues()
         spinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, allLeagueNames)
 
-        adapterRecyclerView = RecyclerTeamsAdapter(listTeam) {
+        adapterRecyclerView = RecyclerTeamsAdapter(listTeam, isTesting) {
             startActivity(
                 intentFor<AboutTeams>(
                     ParameterClass.ID_SELECTED_TEAMS to it.teamId,
-                    ParameterClass.LIST_LEAGUE_DATA to leagues
+                    ParameterClass.LIST_LEAGUE_DATA to leagues,
+                    ParameterClass.KEY_IS_APP_TESTING to isTesting
                 ).clearTask()
             )
         }
@@ -78,7 +81,7 @@ class FragmentTeams : Fragment(), FragmentTeamsModel, FragmentHomeCallback {
 
         val gson = Gson()
         val apiRepository = ApiRepository()
-        presenter = FragmentTeamsPresenter(requireContext(), this, apiRepository, gson)
+        presenter = FragmentTeamsPresenter(requireContext(), this, apiRepository, gson, isTesting)
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -148,10 +151,11 @@ class FragmentTeams : Fragment(), FragmentTeamsModel, FragmentHomeCallback {
     }
 
     companion object {
-        fun newInstance(leagues: List<TeamLeagueData>): FragmentTeams {
+        fun newInstance(leagues: List<TeamLeagueData>, isTesting: Boolean): FragmentTeams {
             val fragment = FragmentTeams()
             val args = Bundle()
             args.putSerializable(ParameterClass.LIST_LEAGUE_DATA, LeagueResponse(leagues))
+            args.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = args
             return fragment
         }

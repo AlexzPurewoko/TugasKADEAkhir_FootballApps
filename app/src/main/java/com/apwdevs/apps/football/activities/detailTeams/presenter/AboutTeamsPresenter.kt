@@ -23,7 +23,7 @@ class AboutTeamsPresenter(
     private var msg: String? = null
     private var teams: TeamsAbout? = null
     private var listPlayers: List<TeamMemberShortData>? = null
-    private val recyclerDataSets: MutableList<DetailRecyclerData> = mutableListOf()
+    private val recyclerDataSet: MutableList<DetailRecyclerData> = mutableListOf()
     private var countUserRefresh: Int = 0
     fun getDataBehaviour(teamId: String) {
         view.showLoading()
@@ -33,10 +33,11 @@ class AboutTeamsPresenter(
             val preventUpdate = AvailableDataUpdates.isAvailable(
                 mutableListOf(cacheFilesTeams, cacheFilesMemberTeam),
                 isTesting,
-                countUserRefresh++
+                countUserRefresh++,
+                contextPool
             ).await()
             var isSuccess = false
-            recyclerDataSets.clear()
+            recyclerDataSet.clear()
             if (preventUpdate.preventToUpdate) {
                     val data = getDataBehaviourFromInet(teamId).await()
                     if (!data) {
@@ -58,10 +59,17 @@ class AboutTeamsPresenter(
                         ostream.close()
                         fstream.close()
                         isSuccess = true
-                        getRecyclerDataSets().await()
+                        getRecyclerDataSets(recyclerDataSet)
                         msg = preventUpdate.msg
                     } else msg = "Yahhh... Error saat ngambil data dari server... maaf yaa"
             } else {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    teams = AboutTeamsPresenterImpl.getAboutTeams(teamId)!!.teams[0]
+                    listPlayers = AboutTeamsPresenterImpl.getPlayerList(teamId)!!.player
+                    msg = preventUpdate.msg
+                    getRecyclerDataSets(recyclerDataSet)
+                    isSuccess = true
+                }
                 if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     var fstream = FileInputStream(cacheFilesTeams)
@@ -74,7 +82,7 @@ class AboutTeamsPresenter(
                     fstream = FileInputStream(cacheFilesMemberTeam)
                     istream = ObjectInputStream(fstream)
                     listPlayers = istream.readObject() as List<TeamMemberShortData>?
-                    getRecyclerDataSets().await()
+                    getRecyclerDataSets(recyclerDataSet)
                     istream.close()
                     fstream.close()
                     isSuccess = true
@@ -86,7 +94,7 @@ class AboutTeamsPresenter(
 
             view.hideLoading()
             if (isSuccess)
-                view.onLoadFinished(teams!!, listPlayers ?: mutableListOf(), recyclerDataSets, msg!!)
+                view.onLoadFinished(teams!!, listPlayers ?: mutableListOf(), recyclerDataSet, msg!!)
             else
                 view.onLoadCancelled(msg!!)
         }
@@ -133,7 +141,7 @@ class AboutTeamsPresenter(
         }
     }
 
-    private fun getRecyclerDataSets(): Deferred<Boolean> = GlobalScope.async {
+    fun getRecyclerDataSets(recyclerDataSets: MutableList<DetailRecyclerData>) {
         recyclerDataSets.add(DetailRecyclerData("Teams", null, PropertyRecyclerType.PROPERTY_INDEPENDENT))
         recyclerDataSets.add(
             DetailRecyclerData(
@@ -262,6 +270,5 @@ class AboutTeamsPresenter(
                 PropertyRecyclerType.PROPERTY_ONLY_TEXT_VALUE
             )
         )
-        recyclerDataSets.size > 1
     }
 }

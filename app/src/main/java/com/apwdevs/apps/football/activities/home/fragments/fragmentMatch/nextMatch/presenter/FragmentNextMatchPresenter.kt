@@ -2,6 +2,7 @@ package com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.nextMa
 
 import android.content.Context
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataController.MatchLeagueResponse
+import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.impl.FragmentMatchPresenterImpl
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.nextMatch.apiRepository.GetNextMatch
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.nextMatch.ui.FragmentNextMatchModel
 import com.apwdevs.apps.football.api.ApiRepository
@@ -20,7 +21,6 @@ class FragmentNextMatchPresenter(
     private var view: FragmentNextMatchModel,
     private val gson: Gson,
     private val apiRepository: ApiRepository,
-    private val enableCaching: Boolean = true,
     private val isTesting: Boolean = false,
     private val contextPool: CoroutineContextProvider = CoroutineContextProvider()
 ) {
@@ -32,7 +32,8 @@ class FragmentNextMatchPresenter(
         GlobalScope.launch(contextPool.main) {
             val cacheData = File(ctx.cacheDir, "next_match$leagueId")
             val preventUpdate =
-                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++).await()
+                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++, contextPool)
+                    .await()
             var isSuccess = false
             if (preventUpdate.preventToUpdate) {
                 if (!getMatchFromServer(leagueId).await()) {
@@ -51,6 +52,12 @@ class FragmentNextMatchPresenter(
 
 
             } else {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    data = FragmentMatchPresenterImpl.getDataNextMatch(leagueId)
+                    msg = preventUpdate.msg
+                    isSuccess = true
+
+                }
                 if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     val fstream = FileInputStream(cacheData)

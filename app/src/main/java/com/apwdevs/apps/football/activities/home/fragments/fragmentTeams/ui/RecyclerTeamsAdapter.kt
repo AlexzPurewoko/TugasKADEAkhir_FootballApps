@@ -7,7 +7,11 @@ import android.widget.Filterable
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.dataController.TeamData
 import org.jetbrains.anko.AnkoContext
 
-class RecyclerTeamsAdapter(private val teams: MutableList<TeamData>, private val listener: (TeamData) -> Unit) :
+class RecyclerTeamsAdapter(
+    private val teams: MutableList<TeamData>,
+    private val isTesting: Boolean,
+    private val listener: (TeamData) -> Unit
+) :
     RecyclerView.Adapter<RecyclerTeamsVH>(), Filterable {
 
     private var mFilteredTeams: MutableList<TeamData> = teams
@@ -57,7 +61,7 @@ class RecyclerTeamsAdapter(private val teams: MutableList<TeamData>, private val
     override fun getItemCount(): Int = mFilteredTeams.size
 
     override fun onBindViewHolder(holder: RecyclerTeamsVH, position: Int) {
-        holder.bindItem(mFilteredTeams[position], listener)
+        holder.bindItem(mFilteredTeams[position], isTesting, listener)
     }
 
 }

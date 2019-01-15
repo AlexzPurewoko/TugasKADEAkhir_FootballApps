@@ -27,23 +27,16 @@ object AvailableDataUpdates {
         var tookServerMilis: Long = 0
         val msg: String
 
+        if (isTesting) {
+            msg = "This app is in testing mode, so we couldn't use internet connection"
+            return@async ConnectionResult(msg, ResultConnection.IN_TESTING_MODE, false)
+        }
+
         var cacheCondition = true
         for (cache in cacheFiles) {
             cacheCondition = cacheCondition && cache.exists()
         }
         val refreshIsMax = countUserRefresh >= maxCountUserRefresh
-        if (isTesting) {
-            if (cacheCondition) {
-                msg = "Cache available, and this context is testing, so we don't need to update data from server"
-                return@async ConnectionResult(msg, ResultConnection.CACHE_IS_AVAIL, false)
-            }
-        } else {
-            if (cacheCondition && !refreshIsMax) {
-                msg =
-                        "Cache is found! if you need to update data, please swipe down about ${maxCountUserRefresh - countUserRefresh}x to update data"
-                return@async ConnectionResult(msg, ResultConnection.CACHE_IS_AVAIL, false)
-            }
-        }
         GlobalScope.doAsync {
             val startConnect = System.currentTimeMillis()
             try {
@@ -55,7 +48,8 @@ object AvailableDataUpdates {
                 httpURL.connect()
                 isConnected = httpURL.responseCode == HttpURLConnection.HTTP_OK
             } catch (e: IOException) {
-                Log.e(javaClass.simpleName, "Error when establishing connection, e: ${e.localizedMessage}")
+                if (!isTesting)
+                    Log.e(javaClass.simpleName, "Error when establishing connection, e: ${e.localizedMessage}")
             } finally {
                 val endConnect = System.currentTimeMillis()
                 tookServerMilis = endConnect - startConnect
@@ -73,7 +67,7 @@ object AvailableDataUpdates {
             if (isConnected) (maxTookServerInMillis - tookServerMilis) * 100 / maxTookServerInMillis else 0
         val preventToUpdate: Boolean
         val enumResult: ResultConnection
-        if (isTesting) {
+        /*if (isTesting) {
             when {
                 isConnected -> {
                     msg = "Missing cache files, so we need to update data from server"
@@ -87,7 +81,7 @@ object AvailableDataUpdates {
                             "Sorry we have lost anything, internet is slowly $internetPercent%, so please enable your right connection to update data from server"
                 }
             }
-        } else {
+        } else {*/
             when {
                 refreshIsMax && isConnected && internetPercent > maxPercentAvailable -> {
                     enumResult = ResultConnection.REQ_UPDATE
@@ -106,18 +100,24 @@ object AvailableDataUpdates {
                 }
             }
 
-        }
+        //}
         ConnectionResult(msg, enumResult, preventToUpdate)
     }
 
 
 }
 
+enum class TestingType {
+    TEST_TYPE_INSTRUMENTATION,
+    TEST_TYPE_UNIT
+}
+
 enum class ResultConnection {
     ERR_CACHE_IS_MISSING,
     ERR_CACHE_AND_CONNECTION_NOT_AVAIL,
     CACHE_IS_AVAIL,
-    REQ_UPDATE
+    REQ_UPDATE,
+    IN_TESTING_MODE
 }
 
 data class ConnectionResult(

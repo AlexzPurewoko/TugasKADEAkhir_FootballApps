@@ -28,9 +28,9 @@ import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.database.TeamFavoriteData
 import com.apwdevs.apps.football.database.database
 import com.apwdevs.apps.football.utility.DialogShowHelper
+import com.apwdevs.apps.football.utility.LoadImage
 import com.apwdevs.apps.football.utility.ParameterClass
 import com.google.gson.Gson
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_about_teams.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.db.classParser
@@ -59,6 +59,7 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
     private lateinit var teamFormedYear: TextView
     private lateinit var teamStadiumName: TextView
     private lateinit var teamId: String
+    private var isTesting: Boolean = false
     private var isFavorite: Boolean = false
     private var menuItem: Menu? = null
 
@@ -92,9 +93,10 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         // init presenter
         teamId = intent.getStringExtra(ParameterClass.ID_SELECTED_TEAMS)
         leagues = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as MutableList<TeamLeagueData>
+        isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)
         val apiRepository = ApiRepository()
         val gson = Gson()
-        presenter = AboutTeamsPresenter(this, this, apiRepository, gson)
+        presenter = AboutTeamsPresenter(this, this, apiRepository, gson, isTesting)
         setSupportActionBar(aboutteams_toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         presenter.getDataBehaviour(teamId)
@@ -141,8 +143,6 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
             negativeButton("Okay") {
                 it.dismiss()
                 finish()
-                //val pid = Process.myPid()
-                //Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(pid) }, 1500)
             }
             iconResource = R.drawable.ic_report_problem
         }.show()
@@ -158,7 +158,7 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         this.players = players
         this.recyclerDataSets = recyclerDataSets
 
-        Picasso.get().load(teams?.teamBadge).resize(150, 150).into(teamBadges)
+        LoadImage.load(this, teams?.teamBadge, isTesting)?.resize(150, 150)?.into(teamBadges)
         teamName.text = teams?.teamName
         teamStadiumName.text = teams?.stadiumName
         teamFormedYear.text = teams?.formedOnYear
@@ -204,7 +204,7 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
         override fun getItem(p0: Int): Fragment = when (p0) {
             0 -> OverviewFragment.newInstance(teams?.clubDescription ?: "Description is Unavailable")
             1 -> DetailTeamsFragment.newInstance(DetailRecyclerCarry(recyclerDataSets))
-            else -> ListMemberFragment.newInstance(players, leagues, teamId)
+            else -> ListMemberFragment.newInstance(players, leagues, teamId, isTesting)
         }
 
         override fun getCount(): Int = 3

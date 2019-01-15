@@ -20,7 +20,6 @@ class FragmentTeamsPresenter(
     private val view: FragmentTeamsModel,
     private val apiRepository: ApiRepository,
     private val gson: Gson,
-    private val enableCaching: Boolean = true,
     private val isTesting: Boolean = false,
     private val contextProvider: CoroutineContextProvider = CoroutineContextProvider()
 ) {
@@ -47,7 +46,12 @@ class FragmentTeamsPresenter(
         val cacheData = File(ctx.cacheDir, "team_list_league$leagueInURI")
         GlobalScope.launch(contextProvider.main) {
             val preventUpdate =
-                AvailableDataUpdates.isAvailable(mutableListOf(cacheData), isTesting, countUserRefresh++).await()
+                AvailableDataUpdates.isAvailable(
+                    mutableListOf(cacheData),
+                    isTesting,
+                    countUserRefresh++,
+                    contextProvider
+                ).await()
             var isSuccess = false
             if (preventUpdate.preventToUpdate) {
 
@@ -66,7 +70,11 @@ class FragmentTeamsPresenter(
                     msg = "Yahhh... maaf gak bisa ngambil data :("
 
             } else {
-                if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
+                if (preventUpdate.enumResult == ResultConnection.IN_TESTING_MODE) {
+                    data = FragmentTeamsImpl.getTeamData(leagueInURI)
+                    msg = preventUpdate.msg
+                    isSuccess = true
+                } else if (preventUpdate.enumResult == ResultConnection.CACHE_IS_AVAIL) {
                     // read from --> cacheFilesTeams
                     val fstream = FileInputStream(cacheData)
                     val istream = ObjectInputStream(fstream)

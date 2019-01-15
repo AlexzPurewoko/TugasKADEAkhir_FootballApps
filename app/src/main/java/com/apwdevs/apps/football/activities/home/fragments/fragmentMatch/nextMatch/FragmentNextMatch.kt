@@ -48,6 +48,7 @@ class FragmentNextMatch : Fragment(), FragmentNextMatchModel, FragmentHomeCallba
 
     private lateinit var leagues: MutableList<TeamLeagueData>
     private lateinit var allLeagueNames: MutableList<String>
+    private var isTesting: Boolean = false
 
     private var allMatchInLeague: MutableList<MatchLeagueData> = mutableListOf()
 
@@ -63,6 +64,7 @@ class FragmentNextMatch : Fragment(), FragmentNextMatchModel, FragmentHomeCallba
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         val item = arguments?.getSerializable(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        isTesting = arguments?.getBoolean(ParameterClass.KEY_IS_APP_TESTING)!!
 
         leagues = item.leagues as MutableList<TeamLeagueData>
         getNameLeagues()
@@ -74,7 +76,9 @@ class FragmentNextMatch : Fragment(), FragmentNextMatchModel, FragmentHomeCallba
                     ParameterClass.ID_EVENT_MATCH_SELECTED to it.eventId,
                     ParameterClass.ID_SELECTED_LEAGUE_KEY to leagues[spinner.selectedItemPosition].leagueId,
                     ParameterClass.NAME_LEAGUE_KEY to leagues[spinner.selectedItemPosition].leagueName,
-                    ParameterClass.LIST_LEAGUE_DATA to item
+                    ParameterClass.LIST_LEAGUE_DATA to item,
+                    ParameterClass.KEY_IS_APP_TESTING to isTesting
+
                 ).clearTask().clearTop()
             )
         }
@@ -83,7 +87,7 @@ class FragmentNextMatch : Fragment(), FragmentNextMatchModel, FragmentHomeCallba
 
         val gson = Gson()
         val apiRepository = ApiRepository()
-        presenter = FragmentNextMatchPresenter(requireContext(), this, gson, apiRepository)
+        presenter = FragmentNextMatchPresenter(requireContext(), this, gson, apiRepository, isTesting)
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -154,10 +158,11 @@ class FragmentNextMatch : Fragment(), FragmentNextMatchModel, FragmentHomeCallba
     }
 
     companion object {
-        fun newInstance(leagues: LeagueResponse): FragmentNextMatch {
+        fun newInstance(leagues: LeagueResponse, isTesting: Boolean): FragmentNextMatch {
             val fragment = FragmentNextMatch()
             val extras = Bundle()
             extras.putSerializable(ParameterClass.LIST_LEAGUE_DATA, leagues)
+            extras.putBoolean(ParameterClass.KEY_IS_APP_TESTING, isTesting)
             fragment.arguments = extras
             return fragment
         }
