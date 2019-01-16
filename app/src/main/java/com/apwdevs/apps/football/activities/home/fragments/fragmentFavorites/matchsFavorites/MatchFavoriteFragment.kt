@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.detailMatchs.DetailMatchActivity
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.dataController.MatchLeagueData
 import com.apwdevs.apps.football.activities.home.fragments.fragmentMatch.lastMatch.ui.FragmentLastMatchRA
@@ -132,7 +133,7 @@ class MatchFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentMatc
     }
 
     private fun getSpannable(): CharSequence? {
-        val result = SpannableStringBuilder("Wahh... nampakya kamu belum suka match apapun :(")
+        val result = SpannableStringBuilder(getString(R.string.fragment_favorite_error_nullmatchs))
         result.setSpan(StyleSpan(Typeface.ITALIC), 0, result.length, 0)
         return result
 

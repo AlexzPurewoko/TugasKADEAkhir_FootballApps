@@ -16,4 +16,5 @@ object ParameterClass {
     const val STRING_ADD_INTO_DATABASE: String = "Added into Favorite! :)"
     const val STRING_REMOVE_FROM_DATABASE: String = "Yahhhh.....\nKok dihapus sihhhh... :'("
     const val KEY_IS_APP_TESTING: String = "APP_TESTING_KEY"
+    const val MSG_IN_TESTING_MODE: String = "This app is in testing mode, so we couldn't use internet connection"
 }

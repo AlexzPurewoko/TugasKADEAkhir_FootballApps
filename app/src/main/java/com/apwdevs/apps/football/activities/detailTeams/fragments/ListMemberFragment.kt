@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.detailPlayer.PlayerDetails
 import com.apwdevs.apps.football.activities.detailTeams.dataController.TeamMemberShortData
 import com.apwdevs.apps.football.activities.detailTeams.dataController.TeamMemberShortDataResponse
@@ -42,7 +43,7 @@ class ListMemberFragment : Fragment(), AnkoComponent<Context> {
             startActivity(
                 intentFor<PlayerDetails>(
                     ParameterClass.ID_SELECTED_PLAYERS to it.playerId,
-                    ParameterClass.LIST_LEAGUE_DATA to leagues.leagues,
+                    ParameterClass.LIST_LEAGUE_DATA to leagues,
                     ParameterClass.ID_SELECTED_TEAMS to teamId,
                     ParameterClass.KEY_IS_APP_TESTING to isTesting
                 ).clearTask()
@@ -57,6 +58,7 @@ class ListMemberFragment : Fragment(), AnkoComponent<Context> {
         relativeLayout {
             lparams(width = matchParent, height = matchParent)
             recyclerView = recyclerView {
+                id = R.id.fragment_listmember_recyclerView
                 layoutManager = LinearLayoutManager(ctx)
             }.lparams(width = matchParent, height = wrapContent)
         }

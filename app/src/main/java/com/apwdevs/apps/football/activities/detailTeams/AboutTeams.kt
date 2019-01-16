@@ -23,6 +23,7 @@ import com.apwdevs.apps.football.activities.detailTeams.fragments.ListMemberFrag
 import com.apwdevs.apps.football.activities.detailTeams.fragments.OverviewFragment
 import com.apwdevs.apps.football.activities.detailTeams.presenter.AboutTeamsPresenter
 import com.apwdevs.apps.football.activities.detailTeams.ui.AboutTeamsModel
+import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.database.TeamFavoriteData
@@ -44,12 +45,12 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
 
 
     private lateinit var dialog: DialogShowHelper
-    private lateinit var viewPagerContainer: ViewPager
-    private lateinit var mViewPagerFragmentAdapter: ViewPagerFragmentAdapter
+    lateinit var viewPagerContainer: ViewPager
+    lateinit var mViewPagerFragmentAdapter: ViewPagerFragmentAdapter
     private lateinit var tabLayout: TabLayout
 
     private var teams: TeamsAbout? = null
-    private lateinit var leagues: MutableList<TeamLeagueData>
+    private val leagues: MutableList<TeamLeagueData> = mutableListOf()
     private lateinit var players: List<TeamMemberShortData>
     private lateinit var recyclerDataSets: List<DetailRecyclerData>
     private lateinit var presenter: AboutTeamsPresenter
@@ -92,7 +93,9 @@ class AboutTeams : AppCompatActivity(), AboutTeamsModel {
 
         // init presenter
         teamId = intent.getStringExtra(ParameterClass.ID_SELECTED_TEAMS)
-        leagues = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as MutableList<TeamLeagueData>
+        val reqLeagues = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        leagues.clear()
+        leagues.addAll(reqLeagues.leagues)
         isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)
         val apiRepository = ApiRepository()
         val gson = Gson()

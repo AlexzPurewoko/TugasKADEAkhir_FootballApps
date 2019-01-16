@@ -28,7 +28,7 @@ object AvailableDataUpdates {
         val msg: String
 
         if (isTesting) {
-            msg = "This app is in testing mode, so we couldn't use internet connection"
+            msg = ParameterClass.MSG_IN_TESTING_MODE
             return@async ConnectionResult(msg, ResultConnection.IN_TESTING_MODE, false)
         }
 

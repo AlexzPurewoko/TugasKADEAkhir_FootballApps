@@ -57,7 +57,7 @@ class DetailMatchActivity : AppCompatActivity(), DetailMatchModel {
     private lateinit var timeText: TextView
 
     // recyclersection
-    private lateinit var recyclerView: RecyclerView
+    lateinit var recyclerView: RecyclerView
     private lateinit var adapter: RecyclerView.Adapter<DetailCardViewHolder>
 
     // other utility

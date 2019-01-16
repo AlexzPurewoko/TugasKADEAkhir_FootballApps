@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import com.apwdevs.apps.football.R
 import com.apwdevs.apps.football.activities.detailTeams.AboutTeams
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.dataController.TeamData
 import com.apwdevs.apps.football.activities.home.fragments.fragmentTeams.ui.RecyclerTeamsAdapter
@@ -51,7 +52,7 @@ class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamM
             startActivity(
                 intentFor<AboutTeams>(
                     ParameterClass.ID_SELECTED_TEAMS to it.teamId,
-                    ParameterClass.LIST_LEAGUE_DATA to leagues.leagues
+                    ParameterClass.LIST_LEAGUE_DATA to leagues
                 ).clearTask()
             )
         }
@@ -131,7 +132,7 @@ class TeamFavoriteFragment : Fragment(), AnkoComponent<ViewGroup>, FragmentTeamM
     }
 
     private fun getSpannable(): CharSequence? {
-        val result = SpannableStringBuilder("Wahh... nampakya kamu belum suka team apapun :(")
+        val result = SpannableStringBuilder(getString(R.string.fragment_favorite_error_nullteams))
         result.setSpan(StyleSpan(Typeface.ITALIC), 0, result.length, 0)
         return result
 

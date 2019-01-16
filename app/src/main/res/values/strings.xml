@@ -19,11 +19,13 @@
     <string name="aboutteams_tab_title_details">Details</string>
     <string name="aboutteams_tab_title_player">Player</string>
     <string name="aboutteams_teambadge_contentdesc">Team badges</string>
-    <string name="fragment_favorites_tab_title_match">Match</string>
-    <string name="fragment_favorites_tab_title_teams">Teams</string>
+    <string name="fragment_favorites_tab_title_match">Fav Matchs</string>
+    <string name="fragment_favorites_tab_title_teams">Fav Teams</string>
     <string name="fragment_match_tab_title_next">Next</string>
     <string name="fragment_match_tab_title_past">Past</string>
     <string name="home_actionbar_title_menumatch">Football Match</string>
     <string name="home_actionbar_title_menuteams">List Team</string>
     <string name="home_actionbar_title_menufavorites">List Favorites</string>
+    <string name="fragment_favorite_error_nullmatchs">Wahh... nampakya kamu belum suka match apapun :(</string>
+    <string name="fragment_favorite_error_nullteams">Wahh... nampakya kamu belum suka team apapun :(</string>
 </resources>

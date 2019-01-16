@@ -71,7 +71,7 @@ class FragmentTeams : Fragment(), FragmentTeamsModel, FragmentHomeCallback {
             startActivity(
                 intentFor<AboutTeams>(
                     ParameterClass.ID_SELECTED_TEAMS to it.teamId,
-                    ParameterClass.LIST_LEAGUE_DATA to leagues,
+                    ParameterClass.LIST_LEAGUE_DATA to LeagueResponse(leagues),
                     ParameterClass.KEY_IS_APP_TESTING to isTesting
                 ).clearTask()
             )

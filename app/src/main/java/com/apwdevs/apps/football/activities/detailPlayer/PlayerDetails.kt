@@ -19,6 +19,7 @@ import com.apwdevs.apps.football.activities.detailPlayer.presenter.PlayerDetails
 import com.apwdevs.apps.football.activities.detailPlayer.ui.PlayerDetailsModel
 import com.apwdevs.apps.football.activities.detailTeams.dataController.DetailRecyclerData
 import com.apwdevs.apps.football.activities.detailTeams.fragments.adapter.DetailTeamRA
+import com.apwdevs.apps.football.activities.splash.dataController.LeagueResponse
 import com.apwdevs.apps.football.activities.splash.dataController.TeamLeagueData
 import com.apwdevs.apps.football.api.ApiRepository
 import com.apwdevs.apps.football.utility.DialogShowHelper
@@ -125,7 +126,8 @@ class PlayerDetails : AppCompatActivity(), PlayerDetailsModel {
         val apiRepository = ApiRepository()
         val gson = Gson()
 
-        leagues = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as List<TeamLeagueData>
+        val leagueResponse = intent.getSerializableExtra(ParameterClass.LIST_LEAGUE_DATA) as LeagueResponse
+        leagues = leagueResponse.leagues
         teamId = intent.getStringExtra(ParameterClass.ID_SELECTED_TEAMS)
         playerId = intent.getStringExtra(ParameterClass.ID_SELECTED_PLAYERS)
         isTesting = intent.getBooleanExtra(ParameterClass.KEY_IS_APP_TESTING, false)

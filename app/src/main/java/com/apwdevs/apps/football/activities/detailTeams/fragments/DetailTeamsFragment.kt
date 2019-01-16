@@ -17,7 +17,7 @@ import org.jetbrains.anko.recyclerview.v7.recyclerView
 
 class DetailTeamsFragment : Fragment(), AnkoComponent<Context> {
 
-    private lateinit var recyclerView: RecyclerView
+    lateinit var recyclerView: RecyclerView
     private lateinit var recyclerAdapter: DetailTeamRA
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
